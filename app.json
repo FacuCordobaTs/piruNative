@@ -1,0 +1,61 @@
+{
+  "expo": {
+    "name": "Piru",
+    "slug": "piru",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/piru-logo-white.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#111827"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.piru.app",
+      "associatedDomains": ["applinks:piru.app"]
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/piru-logo-white.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.piru.app",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "piru"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    },
+    "web": {
+      "favicon": "./assets/images/piru-logo-white.png"
+    },
+    "scheme": "piru",
+    "plugins": [
+      "expo-font",
+      "expo-web-browser",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/piru-logo-white.png",
+          "color": "#ffffff"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "d7da0026-b2f5-44c3-b905-ed037cca49c1"
+      }
+    }
+  }
+}

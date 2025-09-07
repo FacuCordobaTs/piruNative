@@ -1,0 +1,19 @@
+# Node modules (se reconstruyen en el servidor)
+node_modules/
+
+# Android/iOS nativo ya que no es necesario en managed builds
+android/
+ios/
+
+# Archivos de build locales
+.expo/
+.expo-shared/
+*.log
+*.tmp
+*.keystore
+
+# Otros caches
+dist/
+build/
+android/
+.android/
