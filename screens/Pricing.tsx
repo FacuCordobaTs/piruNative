@@ -67,9 +67,7 @@ const FeatureItem = ({ text }: { text: string }) => (
 );
 
 export default function PricingScreen({navigation}: any) {
-  const [timeLeft, setTimeLeft] = useState({ minutes: 9, seconds: 59 });
   const [offerings, setOfferings] = useState<PurchasesOfferings | null>(null);
-  const [showDiscountInput, setShowDiscountInput] = useState(false);
   const [discountCode, setDiscountCode] = useState('');
   const { handleReferal } = useUser();
   const [isLoading, setIsLoading] = useState(false);
@@ -78,32 +76,29 @@ export default function PricingScreen({navigation}: any) {
     getOfferings();
   }, []);
 
+
+  useEffect(() => {
+    const checkSubscription = async () => {
+      const customerInfo = await Purchases.getCustomerInfo();
+      if (typeof customerInfo.entitlements.active["Suscripción Piru"] !== "undefined") {
+        navigation.navigate('Tabs');
+      }
+    }
+    checkSubscription();
+  }, []);
+
   async function getOfferings() {
     const offerings = await Purchases.getOfferings();
     setOfferings(offerings);
   }
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
-        } else if (prev.minutes > 0) {
-          return { minutes: prev.minutes - 1, seconds: 59 };
-        }
-        return prev;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
 
   const handleSuscribe = async (pkg: PurchasesPackage) => {
     console.log("pkg", JSON.stringify(pkg, null, 2));
     setIsLoading(true);
     const { customerInfo } = await Purchases.purchasePackage(pkg);
     console.log("customerInfo", JSON.stringify(customerInfo, null, 2));
-    if (customerInfo.entitlements.active["entl5c603c8e6c"]) {
+    if (typeof customerInfo.entitlements.active["Suscripción Piru"] !== "undefined") {
       navigation.navigate('Tabs');  
     }
   };
@@ -165,65 +160,10 @@ export default function PricingScreen({navigation}: any) {
                 <T className="text-white text-sm font-medium">DESCUENTO EXCLUSIVO</T>
               </View>
               <T className="text-white text-3xl font-bold mb-2">70% OFF</T>
-              <T className="text-white/90 text-sm">Solo para los primeros 1000 usuarios</T>
+              <T className="text-white/90 text-sm">Solo para los primeros 50 usuarios</T>
             </View>
           </GlassCard>
 
-          {/* Discount Code Section */}
-          <GlassCard style={styles.discountCodeCard}>
-              <View
-                style={styles.discountCodeButton}
-              >
-                <View style={styles.discountCodeButtonContent}>
-                  <T className="text-white font-medium text-center">
-                    ¿Tienes un código de descuento?
-                  </T>
-                </View>
-                
-                <TextInput
-                    style={styles.discountInput}
-                    placeholder="Código aquí..."
-                    placeholderTextColor="rgba(255, 255, 255, 0.6)"
-                    value={discountCode}
-                    onChangeText={setDiscountCode}
-                    autoCapitalize="characters"
-                    autoCorrect={false}
-                  />
-                    <TouchableOpacity
-                    style={{
-                        paddingVertical: 8,
-                        borderRadius: 12,
-                        overflow: 'hidden',
-                      }}
-                      onPress={() => handleUploadReferalCode(discountCode)}
-                      className="mt-5"
-                      disabled={isLoading}
-                    >
-                      <View style={{
-                      width: '100%',
-                      paddingHorizontal: 30,
-                      paddingVertical: 10,
-                      borderRadius: 12,
-                      borderWidth: 3,
-                      borderTopColor: '#FFED4A',
-                      borderLeftColor: '#FFED4A',
-                      borderRightColor: '#B8860B',
-                      borderBottomColor: '#B8860B',
-                      shadowColor: '#DAA520',
-                      backgroundColor: '#DAA520',
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: 0.8,
-                      shadowRadius: 6,
-                      elevation: 8,
-                    }}>
-                      <View className="flex-row items-center justify-center gap-3">
-                      <T className="text-black font-cinzel-bold">{isLoading ? 'Aplicando...' : 'Aplicar'}</T>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-              </View>
-            
-          </GlassCard>
 
           {/* Premium card - Updated structure */}
           {offerings?.current?.availablePackages?.map((pkg) => (
@@ -318,6 +258,63 @@ export default function PricingScreen({navigation}: any) {
 
           </View>
           ))}
+
+          
+          {/* Discount Code Section */}
+          <GlassCard style={styles.discountCodeCard}>
+              <View
+                style={styles.discountCodeButton}
+              >
+                <View style={styles.discountCodeButtonContent}>
+                  <T className="text-white font-medium text-center">
+                    ¿Tienes un código de descuento?
+                  </T>
+                </View>
+                
+                <TextInput
+                    style={styles.discountInput}
+                    placeholder="Código aquí..."
+                    placeholderTextColor="rgba(255, 255, 255, 0.6)"
+                    value={discountCode}
+                    onChangeText={setDiscountCode}
+                    autoCapitalize="characters"
+                    autoCorrect={false}
+                  />
+                    <TouchableOpacity
+                    style={{
+                        paddingVertical: 8,
+                        borderRadius: 12,
+                        overflow: 'hidden',
+                      }}
+                      onPress={() => handleUploadReferalCode(discountCode)}
+                      className="mt-5"
+                      disabled={isLoading}
+                    >
+                      <View style={{
+                      width: '100%',
+                      paddingHorizontal: 30,
+                      paddingVertical: 10,
+                      borderRadius: 12,
+                      borderWidth: 3,
+                      borderTopColor: '#FFED4A',
+                      borderLeftColor: '#FFED4A',
+                      borderRightColor: '#B8860B',
+                      borderBottomColor: '#B8860B',
+                      shadowColor: '#DAA520',
+                      backgroundColor: '#DAA520',
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.8,
+                      shadowRadius: 6,
+                      elevation: 8,
+                    }}>
+                      <View className="flex-row items-center justify-center gap-3">
+                      <T className="text-black font-cinzel-bold">{isLoading ? 'Aplicando...' : 'Aplicar'}</T>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+              </View>
+            
+          </GlassCard>
           {/* Trust indicators */}
           <View style={styles.trustIndicators}>
             <View style={styles.trustItem}>
@@ -535,6 +532,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.2)',
     padding: 16,
     marginBottom: 24,
+    marginTop: 24,
   },
   discountCodeButton: {
     alignItems: 'center',

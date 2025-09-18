@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNotifications } from '../hooks/useNotifications';
 import { useUser } from './userProvider';
+import { AVAILABLE_HABITS } from '../constants/habits';
 
 // Types
 export interface Habit {
@@ -21,6 +22,8 @@ export interface Habit {
   spiritual: boolean;
   discipline: boolean;
   social: boolean;
+  image?: any; // Add image property
+  predefinedId?: string; // Add predefined habit ID
 }
 
 export interface HabitCompletion {
@@ -57,6 +60,8 @@ export interface CreateHabitData {
   experienceReward?: number;
   reminderTime?: string;
   categories?: boolean[];
+  predefinedId?: string; // Add predefined habit ID
+  image?: any; // Add image property
 }
 
 export interface CompleteHabitData {
@@ -82,6 +87,53 @@ const HabitsContext = createContext<HabitsContextType | undefined>(undefined);
 
 // API Configuration
 const API_BASE_URL = 'https://api.piru.app/api';
+
+// Helper function to enrich habits with image data from predefined habits
+const enrichHabitsWithImages = (habits: Habit[]): Habit[] => {
+  return habits.map(habit => {
+    // Try to find matching predefined habit by predefinedId first, then by name
+    let predefinedHabit = AVAILABLE_HABITS.find(predefined => 
+      predefined.id === habit.predefinedId
+    );
+    
+    // If not found by predefinedId, try to match by name with more flexible matching
+    if (!predefinedHabit) {
+      predefinedHabit = AVAILABLE_HABITS.find(predefined => {
+        // Exact match
+        if (predefined.name === habit.name) return true;
+        
+        // Flexible matching for common variations
+        const habitNameLower = habit.name.toLowerCase();
+        const predefinedNameLower = predefined.name.toLowerCase();
+        
+        // Check if habit name contains predefined name or vice versa
+        if (habitNameLower.includes(predefinedNameLower) || 
+            predefinedNameLower.includes(habitNameLower)) return true;
+            
+        // Specific mappings for known variations
+        const nameMappings: { [key: string]: string } = {
+          'beber suficiente agua durante el día': 'beber suficiente agua',
+          'limitar el tiempo en pantallas y redes sociales': 'limitar pantallas',
+          'escribir un diario para reflexionar': 'escribir diario',
+          'hacer abdominales': 'hacer abdominales',
+          'hacer flexiones': 'hacer flexiones',
+        };
+        
+        return nameMappings[habitNameLower] === predefinedNameLower;
+      });
+    }
+    
+    if (predefinedHabit) {
+      return {
+        ...habit,
+        image: predefinedHabit.image,
+        predefinedId: predefinedHabit.id,
+      };
+    }
+    
+    return habit;
+  });
+};
 
 // API Helper functions
 const apiCall = async (endpoint: string, options: RequestInit = {}) => {
@@ -140,14 +192,25 @@ export const HabitsProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     try {
       setIsLoading(true);
       const response = await apiCall('/habits');
-      setHabits(response.data);
+      const enrichedHabits = enrichHabitsWithImages(response.data);
+      setHabits(enrichedHabits);
     } catch (error) {
-      console.error('Error refreshing habits:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        error: error
-      });
-      throw error;
+      console.error('Error refreshing habits from API, trying local storage:', error);
+      
+      // Fallback to local storage
+      try {
+        const localHabits = await AsyncStorage.getItem('localHabits');
+        if (localHabits) {
+          const habits = JSON.parse(localHabits);
+          const enrichedHabits = enrichHabitsWithImages(habits);
+          setHabits(enrichedHabits);
+        } else {
+          setHabits([]);
+        }
+      } catch (localError) {
+        console.error('Error loading habits from local storage:', localError);
+        setHabits([]);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -162,7 +225,7 @@ export const HabitsProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       });
       
       const newHabit = response.data;
-      setHabits(prev => [newHabit, ...prev]);
+      const enrichedHabit = enrichHabitsWithImages([newHabit])[0];
       
       // Programar notificaciones para el nuevo hábito
       if (data.targetDays && data.reminderTime) {
@@ -179,14 +242,65 @@ export const HabitsProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         }
       }
       
-      return newHabit;
+      refreshHabits();
+      return enrichedHabit;
     } catch (error) {
-      console.error('Error creating habit:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        error: JSON.stringify(error, Object.getOwnPropertyNames(error))
-      });
-      throw error;
+      console.error('Error creating habit via API, trying local storage:', error);
+      
+      // Fallback to local storage
+      try {
+        const newHabit: Habit = {
+          id: Date.now(), // Simple ID generation
+          userId: 0, // Local user ID
+          name: data.name,
+          description: data.description,
+          targetDays: data.targetDays || [true, true, true, true, true, true, true],
+          currentStreak: 0,
+          longestStreak: 0,
+          experienceReward: data.experienceReward || 10,
+          createdAt: new Date().toISOString(),
+          reminderTime: data.reminderTime || '09:00',
+          completedToday: false,
+          physical: data.categories?.[0] || false,
+          mental: data.categories?.[1] || false,
+          spiritual: data.categories?.[2] || false,
+          discipline: data.categories?.[3] || false,
+          social: data.categories?.[4] || false,
+          image: data.image,
+          predefinedId: data.predefinedId,
+        };
+
+        // Enrich with image data if not already present
+        const enrichedHabit = enrichHabitsWithImages([newHabit])[0];
+
+        // Store in local storage
+        const existingHabits = await AsyncStorage.getItem('localHabits');
+        const habits = existingHabits ? JSON.parse(existingHabits) : [];
+        habits.push(enrichedHabit);
+        await AsyncStorage.setItem('localHabits', JSON.stringify(habits));
+
+        // Update local state
+        setHabits(prev => [...prev, enrichedHabit]);
+
+        // Programar notificaciones para el nuevo hábito
+        if (data.targetDays && data.reminderTime) {
+          try {
+            await scheduleHabitNotification(
+              newHabit.id,
+              newHabit.name,
+              data.targetDays,
+              data.reminderTime
+            );
+          } catch (notificationError) {
+            console.error('Error programando notificaciones:', notificationError);
+          }
+        }
+
+        return enrichedHabit;
+      } catch (localError) {
+        console.error('Error creating habit in local storage:', localError);
+        throw error; // Throw original API error
+      }
     }
   };
 

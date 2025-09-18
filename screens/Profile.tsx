@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, SafeAreaView, Image, Animated, StyleSheet, useWindowDimensions, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { T } from '../components/T';
-import { Brain, Dumbbell, Flame, Heart, Target, Users, Trash2 } from 'lucide-react-native';
 import { useHabits } from '../context/HabitsProvider';
 import { useUser } from '../context/userProvider';
+import { AVAILABLE_HABITS } from '../constants/habits';
 
 const backgroundImage = require('../assets/images/medieval-house-bg.jpg');
 
@@ -43,6 +43,7 @@ interface QuizData {
   wakeUpTime: string;
   focusArea: string;
 }
+
 
 const GlassCard = ({ children, style }: { children: React.ReactNode, style?: any }) => (
   <View style={[styles.glassCard, style]}>
@@ -117,225 +118,73 @@ export default function ProfileScreen({navigation}: any) {
 
     // NoFap habits
     if (data.goals.includes('nofap')) {
-      if (data.nofap_frequency === 'daily' || data.nofap_frequency === 'weekly') {
-        habits.push({ 
-          icon: '🛡️', 
-          name: 'NoFap', 
-          category: 'NoFap', 
-          streak: 0,
-          description: 'Mantener la abstinencia y fortalecer la voluntad'
-        });
-      }
-      
-      if (data.nofap_relapse_causes?.includes('stress')) {
-        habits.push({ 
-          icon: '🧘', 
-          name: 'Meditación anti-estrés', 
-          category: 'Mental', 
-          streak: 0,
-          description: 'Meditar 10 minutos para manejar el estrés'
-        });
-      }
-      
-      if (data.nofap_relapse_causes?.includes('boredom')) {
-        habits.push({ 
-          icon: '📚', 
-          name: 'Lectura productiva', 
-          category: 'Intelecto', 
-          streak: 0,
-          description: 'Leer 30 minutos para evitar el aburrimiento'
-        });
-      }
+      habits.push(AVAILABLE_HABITS.find(h => h.id === 'no_fap'));
     }
 
     // Training habits
     if (data.goals.includes('training')) {
       if (data.training_current_sport === 'gym') {
-        habits.push({ 
-          icon: '💪', 
-          name: 'Entrenamiento en gimnasio', 
-          category: 'Físico', 
-          streak: 0,
-          description: 'Ir al gimnasio 3-4 veces por semana'
-        });
-      } else if (data.training_current_sport === 'soccer') {
-        habits.push({ 
-          icon: '⚽', 
-          name: 'Práctica de fútbol', 
-          category: 'Físico', 
-          streak: 0,
-          description: 'Entrenar fútbol regularmente'
-        });
-      } else if (data.training_current_sport === 'basketball') {
-        habits.push({ 
-          icon: '🏀', 
-          name: 'Práctica de baloncesto', 
-          category: 'Físico', 
-          streak: 0,
-          description: 'Entrenar baloncesto regularmente'
-        });
+        habits.push(AVAILABLE_HABITS.find(h => h.id === 'gym_workout'));
+      } else if (data.training_current_sport === 'soccer' || data.training_current_sport === 'basketball') {
+        habits.push(AVAILABLE_HABITS.find(h => h.id === 'run'));
       } else {
-        habits.push({ 
-          icon: '🏃', 
-          name: 'Ejercicio diario', 
-          category: 'Físico', 
-          streak: 0,
-          description: 'Hacer ejercicio 30 minutos al día'
-        });
-      }
-
-      if (data.training_consistency_cause === 'motivation') {
-        habits.push({ 
-          icon: '🔥', 
-          name: 'Visualización de objetivos', 
-          category: 'Mental', 
-          streak: 0,
-          description: 'Visualizar tus metas deportivas cada mañana'
-        });
+        habits.push(AVAILABLE_HABITS.find(h => h.id === 'gym_workout'));
       }
     }
 
     // Sleep habits
     if (data.goals.includes('sleep')) {
-      if (data.sleep_hours === '<7') {
-        habits.push({ 
-          icon: '🌙', 
-          name: 'Dormir 8 horas', 
-          category: 'Físico', 
-          streak: 0,
-          description: 'Asegurar 8 horas de sueño de calidad'
-        });
-      }
-      
-      if (data.sleep_tired_on_wake === 'always' || data.sleep_tired_on_wake === 'normally') {
-        habits.push({ 
-          icon: '⏰', 
-          name: 'Rutina de sueño', 
-          category: 'Físico', 
-          streak: 0,
-          description: 'Acostarse y levantarse a la misma hora'
-        });
-      }
+      habits.push(AVAILABLE_HABITS.find(h => h.id === 'wake_up_early'));
     }
 
     // Energy habits
     if (data.goals.includes('energy')) {
-      if (data.energy_level === '1' || data.energy_level === '2') {
-        habits.push({ 
-          icon: '💧', 
-          name: 'Hidratación', 
-          category: 'Físico', 
-          streak: 0,
-          description: 'Beber 2L de agua al día'
-        });
-        habits.push({ 
-          icon: '🥗', 
-          name: 'Alimentación saludable', 
-          category: 'Físico', 
-          streak: 0,
-          description: 'Comer 3 comidas balanceadas al día'
-        });
-      }
-      
+      habits.push(AVAILABLE_HABITS.find(h => h.id === 'drink_water'));
       if (data.energy_tired_time === 'after_lunch') {
-        habits.push({ 
-          icon: '☀️', 
-          name: 'Exposición solar', 
-          category: 'Físico', 
-          streak: 0,
-          description: 'Tomar 15 minutos de sol por la mañana'
-        });
+        habits.push(AVAILABLE_HABITS.find(h => h.id === 'wake_up_early'));
       }
     }
 
     // Focus habits
     if (data.goals.includes('focus')) {
       if (data.focus_distraction_level === 'easy') {
-        habits.push({ 
-          icon: '📱', 
-          name: 'Desconexión digital', 
-          category: 'Mental', 
-          streak: 0,
-          description: 'Evitar redes sociales durante 2 horas al día'
-        });
+        habits.push(AVAILABLE_HABITS.find(h => h.id === 'screentime_limit'));
       }
       
       if (data.focus_situations?.includes('studies')) {
-        habits.push({ 
-          icon: '📖', 
-          name: 'Estudio enfocado', 
-          category: 'Intelecto', 
-          streak: 0,
-          description: 'Estudiar 45 minutos sin interrupciones'
-        });
+        habits.push(AVAILABLE_HABITS.find(h => h.id === 'studying'));
       }
       
       if (data.focus_situations?.includes('meditation')) {
-        habits.push({ 
-          icon: '🧘', 
-          name: 'Meditación diaria', 
-          category: 'Espiritual', 
-          streak: 0,
-          description: 'Meditar 10 minutos cada mañana'
-        });
+        habits.push(AVAILABLE_HABITS.find(h => h.id === 'meditate'));
       }
     }
 
     // Add general habits based on focus area
     if (data.focusArea === 'physical') {
-      habits.push({ 
-        icon: '🏋️', 
-        name: 'Ejercicio físico', 
-        category: 'Físico', 
-        streak: 0,
-        description: 'Actividad física diaria'
-      });
+      habits.push(AVAILABLE_HABITS.find(h => h.id === 'gym_workout'));
     } else if (data.focusArea === 'intellect') {
-      habits.push({ 
-        icon: '📚', 
-        name: 'Lectura diaria', 
-        category: 'Intelecto', 
-        streak: 0,
-        description: 'Leer 30 minutos al día'
-      });
+      habits.push(AVAILABLE_HABITS.find(h => h.id === 'read_books'));
     } else if (data.focusArea === 'psyche') {
-      habits.push({ 
-        icon: '🧘', 
-        name: 'Mindfulness', 
-        category: 'Mental', 
-        streak: 0,
-        description: 'Práctica de mindfulness diaria'
-      });
+      habits.push(AVAILABLE_HABITS.find(h => h.id === 'meditate'));
     } else if (data.focusArea === 'spiritual') {
-      habits.push({ 
-        icon: '🙏', 
-        name: 'Gratitud', 
-        category: 'Espiritual', 
-        streak: 0,
-        description: 'Escribir 3 cosas por las que estás agradecido'
-      });
+      habits.push(AVAILABLE_HABITS.find(h => h.id === 'praying'));
     } else if (data.focusArea === 'core') {
-      habits.push({ 
-        icon: '💪', 
-        name: 'Autodisciplina', 
-        category: 'Core', 
-        streak: 0,
-        description: 'Completar una tarea difícil cada día'
-      });
+      habits.push(AVAILABLE_HABITS.find(h => h.id === 'gym_workout'));
     }
 
     // Ensure we have at least 3 habits
     if (habits.length < 3) {
       const defaultHabits = [
-        { icon: '🏋️', name: 'Ejercicio diario', category: 'Físico', streak: 0, description: 'Actividad física diaria' },
-        { icon: '🧠', name: 'Meditación', category: 'Mental', streak: 0, description: 'Meditar 10 minutos al día' },
-        { icon: '❤️', name: 'Gratitud', category: 'Espiritual', streak: 0, description: 'Practicar gratitud diaria' },
+        AVAILABLE_HABITS.find(h => h.id === 'gym_workout'),
+        AVAILABLE_HABITS.find(h => h.id === 'meditate'),
+        AVAILABLE_HABITS.find(h => h.id === 'praying'),
       ];
       
       habits.push(...defaultHabits.slice(0, 3 - habits.length));
     }
 
-    return habits.slice(0, 5); // Return max 5 habits
+    return habits.filter(Boolean).slice(0, 5); // Return max 5 habits, filter out undefined
   };
 
     const [personalizedHabits, setPersonalizedHabits] = useState<any[]>([]);
@@ -356,20 +205,20 @@ export default function ProfileScreen({navigation}: any) {
         } else {
           // Fallback to default habits if no quiz data
           const defaultHabits = [
-            { icon: '🏋️', name: 'Ejercicio diario', category: 'Físico', streak: 0, description: 'Actividad física diaria' },
-            { icon: '🧠', name: 'Meditación', category: 'Mental', streak: 0, description: 'Meditar 10 minutos al día' },
-            { icon: '❤️', name: 'Gratitud', category: 'Espiritual', streak: 0, description: 'Practicar gratitud diaria' },
-          ];
+            AVAILABLE_HABITS.find(h => h.id === 'gym_workout'),
+            AVAILABLE_HABITS.find(h => h.id === 'meditate'),
+            AVAILABLE_HABITS.find(h => h.id === 'praying'),
+          ].filter(Boolean);
           setPersonalizedHabits(defaultHabits);
         }
       } catch (error) {
         console.error('Error loading quiz data:', error);
         // Fallback to default habits
         const defaultHabits = [
-          { icon: '🏋️', name: 'Ejercicio diario', category: 'Físico', streak: 0, description: 'Actividad física diaria' },
-          { icon: '🧠', name: 'Meditación', category: 'Mental', streak: 0, description: 'Meditar 10 minutos al día' },
-          { icon: '❤️', name: 'Gratitud', category: 'Espiritual', streak: 0, description: 'Practicar gratitud diaria' },
-        ];
+          AVAILABLE_HABITS.find(h => h.id === 'gym_workout'),
+          AVAILABLE_HABITS.find(h => h.id === 'meditate'),
+          AVAILABLE_HABITS.find(h => h.id === 'praying'),
+        ].filter(Boolean);
         setPersonalizedHabits(defaultHabits);
       }
     };
@@ -397,93 +246,20 @@ export default function ProfileScreen({navigation}: any) {
     [width, height]
   );
 
-  const handleDeleteHabit = (habitName: string) => {
-    setPersonalizedHabits(prevHabits => prevHabits.filter(habit => habit.name !== habitName));
-  };
 
   const handleContinue = async () => {
     try {
-      // Check if user is authenticated
       setIsLoading(true);
-      if (!isAuthenticated || !token) {
-        console.log('User not authenticated, saving to AsyncStorage only');
-        await AsyncStorage.setItem('personalizedHabits', JSON.stringify(personalizedHabits));
-        // Navigate to Pricing for unauthenticated users
-        navigation.navigate('Pricing');
-        return;
-      }
-
-      console.log('User is authenticated, creating habits via API');
       
-      // Filter out NoFap habits - they are handled separately in the NoFap system
-      const habitsToCreate = personalizedHabits.filter(habit => habit.category !== 'NoFap');
-      console.log(`Filtered out ${personalizedHabits.length - habitsToCreate.length} NoFap habits, creating ${habitsToCreate.length} regular habits`);
-      
-      // Create habits using the HabitsProvider
-      for (const habit of habitsToCreate) {
-        console.log('Creating habit:', habit.name);
-        
-        const habitData = {
-          name: habit.name,
-          description: habit.description,
-          targetDays: [true, true, true, true, true, true, true], // All days by default
-          experienceReward: 10, // Default experience reward
-          reminderTime: '09:00', // Default reminder time
-          categories: [
-            habit.category === 'Físico',    // physical
-            habit.category === 'Mental',    // mental
-            habit.category === 'Espiritual', // spiritual
-            habit.category === 'Core',      // discipline
-            habit.category === 'Intelecto'  // social
-          ]
-        };
-        
-        console.log('Habit data being sent:', JSON.stringify(habitData, null, 2));
-        
-        try {
-          await createHabit(habitData);
-          console.log('Successfully created habit:', habit.name);
-        } catch (habitError) {
-          console.error(`Error creating habit "${habit.name}":`, {
-            message: habitError instanceof Error ? habitError.message : 'Unknown error',
-            stack: habitError instanceof Error ? habitError.stack : undefined,
-            error: JSON.stringify(habitError, Object.getOwnPropertyNames(habitError)),
-            status: (habitError as any).status,
-            statusText: (habitError as any).statusText,
-            name: habitError instanceof Error ? habitError.name : 'Unknown',
-            cause: (habitError as any).cause
-          });
-          // Continue with other habits even if one fails
-        }
-      }
-      
-      // Save personalized habits to AsyncStorage for backup
+      // Save personalized habits to AsyncStorage for the SelectHabits screen
       await AsyncStorage.setItem('personalizedHabits', JSON.stringify(personalizedHabits));
       
-      // Check subscription status and navigate accordingly
-      if (isSuscribed) {
-        navigation.navigate('Tabs');
-      } else {
-        navigation.navigate('Pricing');
-      }
+      // Navigate to SelectHabits screen
+      navigation.navigate('SelectHabits');
     } catch (error) {
-      console.error('Error in handleContinue:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        error: error
-      });
-      // Still save to AsyncStorage as backup even if API fails
-      try {
-        await AsyncStorage.setItem('personalizedHabits', JSON.stringify(personalizedHabits));
-      } catch (storageError) {
-        console.error('Error saving habits to storage:', storageError);
-      }
-      // Check subscription status and navigate accordingly even if there were errors
-      if (isSuscribed) {
-        navigation.navigate('Tabs');
-      } else {
-        navigation.navigate('Pricing');
-      }
+      console.error('Error in handleContinue:', error);
+      // Still navigate to SelectHabits even if there's an error
+      navigation.navigate('SelectHabits');
     } finally {
       setIsLoading(false);
     }
@@ -514,58 +290,30 @@ export default function ProfileScreen({navigation}: any) {
 
           <GlassCard style={styles.habitsCard}>
             <View style={styles.habitsHeader}>
-              <T className="text-lg font-cinzel-bold text-white">
-                {quizData ? 'Hemos personalizado estos hábitos para ti:' : 'Hemos definido estos hábitos para ti:'}
+              <T className="text-lg font-cinzel-bold text-white text-center mb-2">
+                Plan Especial Personalizado
               </T>
-              <T className="text-sm text-white/80">
-                Luego podrás cambiarlos
+              <T className="text-sm text-white/80 text-center mb-4">
+                Hemos creado un plan especial basado en tu perfil. Puedes modificarlo en la siguiente pantalla.
               </T>
             </View>
-            <View>
-              {personalizedHabits.map((habit: any) => (
-                <View
-                key={habit.name}
-                style={styles.ironButton}
-                >
-                  <View
-                    style={styles.ironButtonGradient}
-                  >
-                    <View className="flex-row items-center justify-between p-4"  style={styles.ironButtonBorder}>
-                      <View key={habit.name} className="flex-row items-center gap-4 flex-1">
-                        <View className={`w-8 h-8 rounded-full items-center justify-center`}>
-                        {habit.category === 'Físico' && <Dumbbell color={'white'} size={24} />}
-                        {habit.category === 'Mental' && <Brain color={'white'} size={24} />}
-                        {habit.category === 'Espiritual' && <Heart color={'white'} size={24} />}
-                        {habit.category === 'Intelecto' && <Target color={'white'} size={24} />}
-                        {habit.category === 'Core' && <Users color={'white'} size={24} />} 
-                        {habit.category === 'NoFap' && <Flame color={'white'} size={24} />}
-                  </View>
-                        <View className="flex-1">
-                          <T className="font-cinzel-bold text-sm text-white">{habit.name}</T>
-                    <T className="text-xs text-white/70">{habit.category}</T>
-                          {habit.description && (
-                            <T className="text-xs text-white/50 mt-1">{habit.description}</T>
-                          )}
-                  </View>
-                        <View className="flex-row items-center gap-2">
-                          <TouchableOpacity
-                            onPress={() => handleDeleteHabit(habit.name)}
-                            style={{
-                              backgroundColor: 'rgba(239, 68, 68, 0.2)',
-                              borderRadius: 8,
-                              padding: 6,
-                              borderWidth: 1,
-                              borderColor: 'rgba(239, 68, 68, 0.3)',
-                            }}
-                          >
-                            <Trash2 color={'#ef4444'} size={16} />
-                          </TouchableOpacity>
-                        </View>
-                      </View>
+            <View className="items-center">
+              <View style={styles.planCard}>
+                <T className="text-white font-cinzel-bold text-lg mb-2">Tu Plan Incluye:</T>
+                <T className="text-white/80 text-center mb-4">
+                  {personalizedHabits.length} hábitos personalizados
+                </T>
+                <View className="flex-row flex-wrap justify-center gap-2">
+                  {personalizedHabits.map((habit: any, index: number) => (
+                    <View key={habit.id || habit.name} style={styles.habitChip}>
+                      <T className="text-white text-xs font-cinzel">{habit.name}</T>
                     </View>
-                  </View>
+                  ))}
                 </View>
-              ))}
+                <T className="text-yellow-400 text-center mt-4 text-sm">
+                  ✨ Podrás personalizar horarios y días
+                </T>
+              </View>
             </View>
           </GlassCard>
 
@@ -628,7 +376,7 @@ export default function ProfileScreen({navigation}: any) {
               marginBottom: 16,
             }}>
               <View className="flex-row items-center justify-center gap-3">
-                <T className="font-cinzel-bold text-black text-center">{isLoading ? 'Comenzando...' : '¡Comenzar mi aventura!'}</T>
+                <T className="font-cinzel-bold text-black text-center">{isLoading ? 'Cargando...' : '¡Personalizar mi Plan!'}</T>
               </View>
             </View>
           </TouchableOpacity>
@@ -846,5 +594,22 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 12,
     overflow: 'hidden',
+  },
+  planCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    width: '100%',
+    alignItems: 'center',
+  },
+  habitChip: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
 });

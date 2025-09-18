@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
-import Constants from 'expo-constants';
 import Purchases from 'react-native-purchases';
 
 // Types
@@ -135,7 +134,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [currentStreak, setCurrentStreak] = useState<number | null>(null);
   const [levelUpData, setLevelUpData] = useState<LevelUpData | null>(null);
   const isAuthenticated = !!token && !!user;
-  const [isSuscribed, setIsSuscribed] = useState(true);
+  const [isSuscribed, setIsSuscribed] = useState(false);
 
   // Initialize app - check for existing token
   useEffect(() => {
@@ -260,7 +259,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setCurrentStreak(days);
       }
       const customerInfo = await Purchases.getCustomerInfo();
-      setIsSuscribed(user?.referalCode !== null || typeof customerInfo.entitlements.active["entl5c603c8e6c"] !== "undefined");
+      setIsSuscribed(user?.referalCode !== null || typeof customerInfo.entitlements.active["Suscripción Piru"] !== "undefined");
 
     } catch (error) {
       console.error('Error refreshing user data:', error);

@@ -1,26 +1,24 @@
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  SafeAreaView,
-  TouchableOpacity,
-  ScrollView,
-  ImageBackground,
-  Image,
-  StyleSheet,
-  useWindowDimensions,
-  Alert,
-} from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, TouchableOpacity, SafeAreaView, Image, ScrollView, StyleSheet, useWindowDimensions, ImageBackground } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { T } from '../components/T';
+import { Brain, Dumbbell, Flame, Heart, Target, Users, Clock, BookOpen, Sun, Droplets, Smartphone, PenTool, BookMarked, Zap, Shield, Wine, Cross } from 'lucide-react-native';
 import { useHabits } from '../context/HabitsProvider';
-import { Dumbbell, Brain, Heart, Target, Users, Clock, Zap, Shield, Flame, Wine, Cross, BookOpen, PenTool, BookMarked, Smartphone, Droplets, Sun } from 'lucide-react-native';
-import { useNotifications } from '../hooks/useNotifications';
+import { useUser } from '../context/userProvider';
 import { AVAILABLE_HABITS, PredefinedHabit, mapPredefinedToCreateData } from '../constants/habits';
 
-const backgroundImage = require('../assets/images/landscape-quiz.jpg');
+const backgroundImage = require('../assets/images/medieval-house-bg.jpg');
 
-// Componente para el efecto de glassmorphism con estilos del quiz
-const BlurredCard = ({ children, style, className }: { children: React.ReactNode, style?: any, className?: string }) => {
+// Componente para el efecto de glassmorphism
+const BlurredCard = ({ 
+  children, 
+  style, 
+  className 
+}: { 
+  children: React.ReactNode, 
+  style?: any, 
+  className?: string
+}) => {
   const [layout, setLayout] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const cardRef = useRef<View>(null);
   const { width, height } = useWindowDimensions();
@@ -33,7 +31,7 @@ const BlurredCard = ({ children, style, className }: { children: React.ReactNode
           setLayout({ x: px, y: py, width: cardWidth, height: cardHeight });
         });
       }}
-      className={`relative rounded-3xl overflow-hidden ${className || ''}`}
+      className={`relative rounded-2xl overflow-hidden mb-4 ${className || ''}`}
       style={style}
     >
       {/* <Image
@@ -47,16 +45,16 @@ const BlurredCard = ({ children, style, className }: { children: React.ReactNode
             height: height,
           },
         ]}
-        blurRadius={20}
+        blurRadius={30}
       /> */}
-      <View className="rounded-3xl bg-black/30">
+      <View className="bg-black/40 p-4">
         {children}
       </View>
     </View>
   );
 };
 
-// Componente GoldButton con estilo medieval del quiz
+// Componente GoldButton con estilo medieval
 const GoldButton = ({ onPress, disabled, children, style }: { onPress: () => void, disabled?: boolean, children: React.ReactNode, style?: any }) => (
   <TouchableOpacity
     activeOpacity={1}
@@ -69,53 +67,40 @@ const GoldButton = ({ onPress, disabled, children, style }: { onPress: () => voi
       overflow: 'hidden',
     }}
   >
-      <View style={{
-        width: '100%',
-        paddingHorizontal: 6,
-        paddingVertical: 10,
-        borderRadius: 12,
-        borderWidth: 3,
-        borderTopColor: '#FFED4A',
-        borderLeftColor: '#FFED4A',
-        borderRightColor: '#B8860B',
-        borderBottomColor: '#B8860B',
-        shadowColor: '#DAA520',
-        backgroundColor: '#DAA520',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.8,
-        shadowRadius: 6,
-        elevation: 8,
-      }}>
+    <View style={{
+      width: '100%',
+      paddingHorizontal: 6,
+      paddingVertical: 10,
+      borderRadius: 12,
+      borderWidth: 3,
+      borderTopColor: '#FFED4A',
+      borderLeftColor: '#FFED4A',
+      borderRightColor: '#B8860B',
+      borderBottomColor: '#B8860B',
+      shadowColor: '#DAA520',
+      backgroundColor: '#DAA520',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.8,
+      shadowRadius: 6,
+      elevation: 8,
+    }}>
       <View className="flex-row items-center justify-center gap-3">
-        <Text className="font-cinzel-bold text-base text-center text-black">
+        <T className="font-cinzel-bold text-base text-center text-black">
           {children}
-        </Text>
+        </T>
       </View>
-      </View>
-  </TouchableOpacity>
-);
-
-// Componente para los días de la semana, adaptado del OptionButton del quiz
-const DayButton = ({ onPress, active, label }: { onPress: () => void, active: boolean, label: string }) => (
-  <TouchableOpacity onPress={onPress} activeOpacity={0.8} className="flex-1 aspect-square">
-    <View className={`flex-1 rounded-xl justify-center items-center border ${
-      active 
-        ? 'bg-yellow-400/30 border-yellow-400' 
-        : 'bg-white/10 border-white/20'
-    }`}>
-      <T className="text-white font-cinzel-bold text-lg">{label}</T>
     </View>
   </TouchableOpacity>
 );
 
-// Habit Selection Component
+// HabitCard Component
 const HabitCard = ({ 
   habit, 
   isSelected, 
-  onToggle, 
-  isCustomizable, 
-  customization, 
-  onUpdateCustomization 
+  onToggle,
+  isCustomizable,
+  customization,
+  onUpdateCustomization
 }: { 
   habit: PredefinedHabit, 
   isSelected: boolean, 
@@ -124,33 +109,14 @@ const HabitCard = ({
   customization: {days: boolean[], time: string},
   onUpdateCustomization: (field: 'days' | 'time', value: boolean[] | string) => void
 }) => {
-  const getIconComponent = (iconName: string) => {
-    const iconProps = { color: 'white', size: 20 };
-    switch (iconName) {
-      case 'Sun': return <Sun {...iconProps} />;
-      case 'Zap': return <Zap {...iconProps} />;
-      case 'Dumbbell': return <Dumbbell {...iconProps} />;
-      case 'Droplets': return <Droplets {...iconProps} />;
-      case 'Heart': return <Heart {...iconProps} />;
-      case 'Smartphone': return <Smartphone {...iconProps} />;
-      case 'BookOpen': return <BookOpen {...iconProps} />;
-      case 'PenTool': return <PenTool {...iconProps} />;
-      case 'BookMarked': return <BookMarked {...iconProps} />;
-      case 'Shield': return <Shield {...iconProps} />;
-      case 'Flame': return <Flame {...iconProps} />;
-      case 'Wine': return <Wine {...iconProps} />;
-      case 'Cross': return <Cross {...iconProps} />;
-      default: return <Target {...iconProps} />;
-    }
-  };
-
   const getCategoryIcon = (category: string) => {
     const iconProps = { color: 'white', size: 12 };
     switch (category) {
-      case 'Físico': return <Dumbbell {...iconProps} />;
+      case 'Physical': return <Dumbbell {...iconProps} />;
       case 'Mental': return <Brain {...iconProps} />;
-      case 'Espiritual': return <Heart {...iconProps} />;
-      case 'Intelecto': return <Target {...iconProps} />;
+      case 'Spiritual': return <Heart {...iconProps} />;
+      case 'Discipline': return <Target {...iconProps} />;
+      case 'Social': return <Users {...iconProps} />;
       case 'NoFap': return <Shield {...iconProps} />;
       default: return <Target {...iconProps} />;
     }
@@ -183,6 +149,11 @@ const HabitCard = ({
           style={styles.habitImage}
           resizeMode="cover"
         />
+        <View style={styles.habitSelector}>
+          <View style={[styles.selectorCircle, isSelected ? styles.selectorCircleSelected : styles.selectorCircleUnselected]}>
+            {isSelected && <T className="text-white text-xs font-bold">✓</T>}
+          </View>
+        </View>
         <View style={styles.habitContent}>
           <View style={styles.habitHeader}>
             <T className="font-cinzel-bold text-white text-base">{habit.name}</T>
@@ -191,7 +162,9 @@ const HabitCard = ({
                 {habit.categories.map((category: string, index: number) => (
                   <View key={index} style={styles.categoryItem}>
                     {getCategoryIcon(category)}
-                    <T className="text-white text-xs font-cinzel ml-1 mb-1">{category}</T>
+                    <T className="text-white text-xs font-cinzel ml-1 mb-1">
+                      {category === 'Physical' ? 'Físico' : category === 'Mental' ? 'Mental' : category === 'Spiritual' ? 'Espiritual' : category === 'Discipline' ? 'Disciplina' : category === 'Social' ? 'Social' : category === 'NoFap' ? 'NoFap' : category}
+                    </T>
                   </View>
                 ))}
               </View>
@@ -212,11 +185,6 @@ const HabitCard = ({
             <View style={styles.habitDetailItem}>
               <T className="text-xs text-white/60">+{habit.experienceReward} XP</T>
             </View>
-          </View>
-        </View>
-        <View style={styles.habitSelector}>
-          <View style={[styles.selectorCircle, isSelected ? styles.selectorCircleSelected : styles.selectorCircleUnselected]}>
-            {isSelected && <T className="text-white text-xs font-bold">✓</T>}
           </View>
         </View>
       </TouchableOpacity>
@@ -321,31 +289,19 @@ const HabitCard = ({
   );
 };
 
-export default function CreateHabitScreen({ navigation }: any) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export default function SelectHabits({ navigation }: any) {
   const [selectedHabits, setSelectedHabits] = useState<string[]>([]);
-  const [selectedDays, setSelectedDays] = useState<boolean[]>([true, true, true, true, true, true, true]);
+  const [isLoading, setIsLoading] = useState(false);
   const [customizedHabits, setCustomizedHabits] = useState<{[key: string]: {days: boolean[], time: string}}>({});
-  const { createHabit, habits, refreshHabits } = useHabits();
-  const { hasPermission, requestPermissions } = useNotifications();
+  const { createHabit } = useHabits();
+  const { isSuscribed } = useUser();
 
-  // Refresh habits when component mounts to ensure we have the latest data
   useEffect(() => {
-    refreshHabits();
+    loadPersonalizedHabits();
   }, []);
 
-  const days = [
-    { short: "L", boolean: false },
-    { short: "M", boolean: false },
-    { short: "M", boolean: false },
-    { short: "J", boolean: false },
-    { short: "V", boolean: false },
-    { short: "S", boolean: false },
-    { short: "D", boolean: false },
-  ];
-
   // Habits that can be customized (not abstinence habits)
-  const customizableHabits = ['run', 'gym_workout', 'drink_water', 'cold_shower', 'meditate', 'screentime_limit', 'read_books', 'journaling', 'sit_up', 'push_up', 'studying', 'wake_up_early'];
+  const customizableHabits = ['run', 'gym_workout', 'cold_shower', 'meditate', 'read_books', 'journaling', 'sit_up', 'push_up', 'studying' ];
 
   const isCustomizable = (habitId: string) => {
     return customizableHabits.includes(habitId);
@@ -368,15 +324,26 @@ export default function CreateHabitScreen({ navigation }: any) {
     }));
   };
 
-  // Filter out habits that user already has
-  const getAvailableHabits = () => {
-    return AVAILABLE_HABITS.filter(habit => {
-      // Check if user already has this habit by name or predefinedId
-      return !habits.some(existingHabit => 
-        existingHabit.name === habit.name || 
-        existingHabit.predefinedId === habit.id
-      );
-    });
+  const loadPersonalizedHabits = async () => {
+    try {
+      // First try to load from personalizedHabits (Profile screen)
+      const personalizedHabitsData = await AsyncStorage.getItem('personalizedHabits');
+      if (personalizedHabitsData) {
+        const personalizedHabits = JSON.parse(personalizedHabitsData);
+        setSelectedHabits(personalizedHabits.map((habit: any) => habit.id));
+        return;
+      }
+      
+      // Fallback to quiz data
+      const quizData = await AsyncStorage.getItem('quizData');
+      if (quizData) {
+        const parsedData = JSON.parse(quizData);
+        const personalizedHabits = parsedData.personalizedHabits || [];
+        setSelectedHabits(personalizedHabits.map((habit: any) => habit.id));
+      }
+    } catch (error) {
+      console.error('Error loading personalized habits:', error);
+    }
   };
 
   const toggleHabit = (habitId: string) => {
@@ -387,38 +354,17 @@ export default function CreateHabitScreen({ navigation }: any) {
     );
   };
 
-  const toggleDay = (pos: number) => {
-    setSelectedDays(prev => prev.map((d, i) => i === pos ? !d : d));
-  };
-
-  const handleCreateHabits = async () => {
+  const handleContinue = async () => {
     if (selectedHabits.length === 0) {
-      Alert.alert('Error', 'Selecciona al menos un hábito para crear.');
       return;
     }
 
-    // Verificar permisos de notificación antes de crear los hábitos
-    if (!hasPermission) {
-      const permissionGranted = await requestPermissions();
-      if (!permissionGranted) {
-        Alert.alert(
-          'Permisos requeridos',
-          'Para recibir recordatorios de tus hábitos, necesitas permitir las notificaciones.',
-          [
-            { text: 'Cancelar', style: 'cancel' },
-            { text: 'Configurar', onPress: () => requestPermissions() }
-          ]
-        );
-        return;
-      }
-    }
-
     try {
-      setIsSubmitting(true);
+      setIsLoading(true);
       
       // Create each selected habit
       for (const habitId of selectedHabits) {
-        const predefinedHabit = getAvailableHabits().find(h => h.id === habitId);
+        const predefinedHabit = AVAILABLE_HABITS.find(h => h.id === habitId);
         if (predefinedHabit) {
           const habitData = mapPredefinedToCreateData(predefinedHabit);
           
@@ -433,12 +379,16 @@ export default function CreateHabitScreen({ navigation }: any) {
         }
       }
 
-      navigation.goBack();
+      // Navigate to Pricing or Tabs based on user subscription
+      if (isSuscribed) {
+        navigation.navigate('Tabs');
+      } else {
+        navigation.navigate('Pricing');
+      }
     } catch (error) {
       console.error('Error creating habits:', error);
-      Alert.alert('Error', 'No se pudieron crear los hábitos. Intenta nuevamente.');
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
@@ -450,66 +400,57 @@ export default function CreateHabitScreen({ navigation }: any) {
         resizeMode="cover"
       >
         <View className="absolute inset-0 bg-black/50" />
-
+        
         <SafeAreaView className="flex-1">
-          <ScrollView contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 20, paddingTop: 40, paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
-
-            {/* Card para el encabezado */}
-            <BlurredCard className="rounded-3xl mb-5 ">
-              <View className="flex-column justify-between p-5">
-                <T className="text-xl font-cinzel-bold text-white">Seleccionar Hábitos</T>
-                <View className="">
-                  <T className="text-sm text-white/70">{selectedHabits.length} seleccionados</T>
-                  <T className="text-xs text-white/50">{getAvailableHabits().length} disponibles</T>
-                </View>
+          <ScrollView 
+            className="flex-1 px-4"
+            contentContainerStyle={{ paddingBottom: 100 }}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Header */}
+            <BlurredCard className="mt-8">
+              <View className="items-center">
+                <T className="text-2xl font-cinzel-bold text-white text-center mb-2">
+                  Plan Especial Personalizado
+                </T>
+                <T className="text-white/80 text-center mb-2">
+                  Hemos seleccionado estos hábitos especialmente para ti basados en tu perfil.
+                </T>
+                <T className="text-yellow-400 text-center mb-4">
+                  Puedes modificar tu plan agregando o quitando hábitos
+                </T>
+                <T className="text-yellow-400 font-cinzel-bold text-lg">
+                  {selectedHabits.length} hábitos seleccionados
+                </T>
               </View>
             </BlurredCard>
 
-
-            {/* Card para selección de hábitos */}
-            <BlurredCard className="rounded-3xl mb-5">
-              <View className="p-6">
-                <T className="text-xl font-cinzel-bold text-white mb-4">Selecciona tus hábitos</T>
-                {getAvailableHabits().length > 0 ? (
-                  <View className="gap-3">
-                    {getAvailableHabits().map((habit) => (
-                      <HabitCard
-                        key={habit.id}
-                        habit={habit}
-                        isSelected={selectedHabits.includes(habit.id)}
-                        onToggle={() => toggleHabit(habit.id)}
-                        isCustomizable={isCustomizable(habit.id)}
-                        customization={getHabitCustomization(habit.id)}
-                        onUpdateCustomization={(field, value) => updateHabitCustomization(habit.id, field, value)}
-                      />
-                    ))}
-                  </View>
-                ) : (
-                  <View className="items-center py-8">
-                    <T className="text-white/70 text-center mb-2">¡Ya tienes todos los hábitos disponibles!</T>
-                    <T className="text-white/50 text-center text-sm">No hay más hábitos para agregar en este momento.</T>
-                  </View>
-                )}
+            {/* Habits List */}
+            <BlurredCard>
+              <View className="gap-4">
+                {AVAILABLE_HABITS.map((habit) => (
+                  <HabitCard
+                    key={habit.id}
+                    habit={habit}
+                    isSelected={selectedHabits.includes(habit.id)}
+                    onToggle={() => toggleHabit(habit.id)}
+                    isCustomizable={isCustomizable(habit.id)}
+                    customization={getHabitCustomization(habit.id)}
+                    onUpdateCustomization={(field, value) => updateHabitCustomization(habit.id, field, value)}
+                  />
+                ))}
               </View>
             </BlurredCard>
 
-            {/* Botón de envío */}
-            <View className="py-5 px-2.5">
+            {/* Continue Button */}
+            <View className="mt-6">
               <GoldButton
-                onPress={handleCreateHabits}
-                disabled={selectedHabits.length === 0 || isSubmitting || getAvailableHabits().length === 0}
-                style={styles.submitButton}
+                onPress={handleContinue}
+                disabled={selectedHabits.length === 0 || isLoading}
               >
-                <View className="flex-row items-center justify-center">
-                  <T className="ml-2 text-black font-cinzel-bold text-base">
-                    {isSubmitting ? 'Creando...' : 
-                     getAvailableHabits().length === 0 ? 'No hay hábitos disponibles' :
-                     `Crear ${selectedHabits.length} Hábito${selectedHabits.length !== 1 ? 's' : ''}`}
-                  </T>
-                </View>
+                {isLoading ? 'Creando hábitos...' : '¡Comenzar mi aventura!'}
               </GoldButton>
             </View>
-
           </ScrollView>
         </SafeAreaView>
       </ImageBackground>
@@ -518,69 +459,14 @@ export default function CreateHabitScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  // BlurredCard complex positioning styles
   blurredImage: {
     position: 'absolute',
-    // Los estilos top, left, width y height se ajustan dinámicamente
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 1,
   },
-  
-  // Iron button complex border and shadow effects
-  ironButtonBorder: {
-    width: '100%',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 3,
-    borderTopColor: '#4a4a4a',
-    borderLeftColor: '#4a4a4a',
-    borderRightColor: '#1a1a1a',
-    borderBottomColor: '#1a1a1a',
-    shadowColor: '#000000',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.6,
-    shadowRadius: 4,
-    elevation: 6,
-  },
-  
-  ironButtonGradient: {
-    flex: 1,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  // Gold button complex border and shadow effects
-  goldButtonBorder: {
-    width: '100%',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 3,
-    borderTopColor: '#FFD700',
-    borderLeftColor: '#FFD700',
-    borderRightColor: '#F59E0B',
-    borderBottomColor: '#F59E0B',
-    backgroundColor: 'rgba(255, 215, 0, 1)',
-  },
-
-  // Submit button dimensions
-  submitButton: {
-    width: '100%', 
-    paddingVertical: 16,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  textInput: {
-    width: '100%',
-    borderRadius: 12,
-    paddingHorizontal: 16, 
-    color: 'white',
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-    fontSize: 16,
-  },
-  // Habit card styles
   habitCardWrapper: {
     borderRadius: 12,
     overflow: 'hidden',
@@ -623,8 +509,6 @@ const styles = StyleSheet.create({
   },
   difficultyContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 8,
   },
   starsContainer: {
     flexDirection: 'row',

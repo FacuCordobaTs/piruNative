@@ -9,6 +9,7 @@ import Tabs from './navigation/Tabs';
 import QuizScreen from './screens/Quiz';
 import Loading from './screens/Loading';
 import Profile from './screens/Profile';
+import SelectHabits from './screens/SelectHabits';
 import { UserProvider, useUser } from './context/userProvider';
 import Pricing from './screens/Pricing';
 import { HabitsProvider } from './context/HabitsProvider';
@@ -36,6 +37,7 @@ function AppContent() {
             Quiz: 'Quiz',
             Tabs: 'Home',
             Profile: 'Profile',
+            SelectHabits: 'SelectHabits',
             Pricing: 'Pricing',
             Meditation: 'Meditation',
             Arenas: 'Arenas',
@@ -51,6 +53,7 @@ function AppContent() {
         <Stack.Screen name="Quiz" component={QuizScreen} />
         <Stack.Screen name="Loading" component={Loading} />
         <Stack.Screen name="Profile" component={Profile} />
+        <Stack.Screen name="SelectHabits" component={SelectHabits} />
         <Stack.Screen name="Pricing" component={Pricing} />
         <Stack.Screen name="Meditation" component={Meditation} />
         <Stack.Screen name="CreateHabit" component={CreateHabitScreen} />
@@ -73,7 +76,7 @@ export default function App() {
     Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
 
     if (Platform.OS === 'android') {
-       Purchases.configure({apiKey: 'goog_yNmUwrfHrIslTlQrMjjsOGqipqh'});
+       Purchases.configure({apiKey: process.env.EXPO_PUBLIC_ANDROID_API_KEY});
     }
     getCustomerInfo();
   }, []);

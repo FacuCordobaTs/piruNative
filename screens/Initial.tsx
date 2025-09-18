@@ -18,8 +18,9 @@ export default function IndexScreen({navigation}: any) {
       }
       setAlreadyChecked(alreadyChecked + 1);
       const customerInfo = await Purchases.getCustomerInfo();
-      const isSuscribed = (user?.referalCode !== null || typeof customerInfo.entitlements.active["entl5c603c8e6c"] !== "undefined");
-      
+      const isSuscribed = (user?.referalCode !== null || typeof customerInfo.entitlements.active["Suscripción Piru"] !== "undefined");
+      // const isSuscribed = true;
+
       if (user) {
         if (user?.completedQuiz) {
           if (isSuscribed) {
@@ -45,7 +46,8 @@ export default function IndexScreen({navigation}: any) {
     if (user) {
       if (user?.completedQuiz) {
         const customerInfo = await Purchases.getCustomerInfo();
-        const isSuscribed = (user?.referalCode !== null || typeof customerInfo.entitlements.active["entl5c603c8e6c"] !== "undefined");
+        const isSuscribed = (user?.referalCode !== null || typeof customerInfo.entitlements.active["Suscripción Piru"] !== "undefined");
+        // const isSuscribed = true;
         if (isSuscribed) {
           navigation.navigate('Tabs');
         } else {

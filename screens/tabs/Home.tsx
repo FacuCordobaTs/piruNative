@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { View, SafeAreaView, TouchableOpacity, Image, Animated, StyleSheet, ScrollView, ImageBackground, useWindowDimensions, Alert, Modal } from 'react-native';
 import { Habit, useHabits } from '../../context/HabitsProvider';
 import { useUser } from '../../context/userProvider';
+import { AVAILABLE_HABITS } from '../../constants/habits';
 import { useNotifications } from '../../hooks/useNotifications'; 
-import { Brain, Dumbbell, Heart, Target, Users, Flame, Plus, Clock, Sword, Trophy, Zap, Edit3, Trash2, X, Loader2, ArrowRight } from 'lucide-react-native';
+import { Brain, Dumbbell, Heart, Target, Users, Flame, Plus, Clock, Sword, Trophy, Zap, Edit3, Trash2, X, Loader2, ArrowRight, BookOpen } from 'lucide-react-native';
 import { T } from '../../components/T';
 
 // Import images
@@ -451,7 +452,7 @@ const WeeklyCalendar = ({ userLevel }: { userLevel: number }) => {
       <BlurredCard className="mb-6" backgroundImage={getBackgroundByLevel(userLevel)}>
           <View className="flex-row items-center mb-4">
               <SwordIcon />
-              <T className="text-lg font-cinzel-bold text-white ml-2">Semana del Guerrero</T>
+              <T className="text-lg font-cinzel-bold text-white ml-2">Tu Semana</T>
           </View>
           <View className="flex-row justify-between items-center">
               {days.map((day, index) => (
@@ -478,79 +479,79 @@ const WeeklyCalendar = ({ userLevel }: { userLevel: number }) => {
 };
 
 // Mascot Section Component with enhanced styling
-const MascotSection = ({ userLevel, user }: { userLevel: number, user: any }) => {
-  // Calculate weighted score for pirunivel selection
-  const getPiruNivelImage = () => {
-    if (!user) return mascotImage; // Fallback to default mascot if user is null
+// const MascotSection = ({ userLevel, user }: { userLevel: number, user: any }) => {
+//   // Calculate weighted score for pirunivel selection
+//   const getPiruNivelImage = () => {
+//     if (!user) return mascotImage; // Fallback to default mascot if user is null
     
-    // Calculate NoFap streak (similar to NoFap screen)
-    let nofapStreak = 0;
-    if (user.lastRelapse) {
-      const lastRelapseDate = new Date(user.lastRelapse);
-      const currentDate = new Date();
-      const timeDiff = currentDate.getTime() - lastRelapseDate.getTime();
-      nofapStreak = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-    }
+//     // Calculate NoFap streak (similar to NoFap screen)
+//     let nofapStreak = 0;
+//     if (user.lastRelapse) {
+//       const lastRelapseDate = new Date(user.lastRelapse);
+//       const currentDate = new Date();
+//       const timeDiff = currentDate.getTime() - lastRelapseDate.getTime();
+//       nofapStreak = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+//     }
     
-    // Calculate average of all stat points
-    const averageStats = (
-      user.physicalPoints + 
-      user.mentalPoints + 
-      user.spiritualPoints + 
-      user.disciplinePoints + 
-      user.socialPoints
-    ) / 5;
+//     // Calculate average of all stat points
+//     const averageStats = (
+//       user.physicalPoints + 
+//       user.mentalPoints + 
+//       user.spiritualPoints + 
+//       user.disciplinePoints + 
+//       user.socialPoints
+//     ) / 5;
     
-    // Weighted calculation: 60% NoFap streak, 40% average stats
-    const weightedScore = (nofapStreak * 0.6) + (averageStats * 0.4);
+//     // Weighted calculation: 60% NoFap streak, 40% average stats
+//     const weightedScore = (nofapStreak * 0.6) + (averageStats * 0.4);
     
-    // Map weighted score to pirunivel images
-    if (weightedScore >= 30) {
-      return piruNivel4;
-    } else if (weightedScore >= 20) {
-      return piruNivel3;
-    } else if (weightedScore >= 10) {
-      return piruNivel2;
-    } else {
-      return piruNivel1;
-    }
-  };
+//     // Map weighted score to pirunivel images
+//     if (weightedScore >= 30) {
+//       return piruNivel4;
+//     } else if (weightedScore >= 20) {
+//       return piruNivel3;
+//     } else if (weightedScore >= 10) {
+//       return piruNivel2;
+//     } else {
+//       return piruNivel1;
+//     }
+//   };
 
-  return (
-    <BlurredCard backgroundImage={getBackgroundByLevel(userLevel)}>
-      <View className="flex-row items-center gap-4">
-        <View className="relative">
-          <View className="w-32 h-32 overflow-hidden">
-            <Image source={getPiruNivelImage()} className="w-full h-full" style={{ objectFit: 'contain' }} />
-          </View>
-        </View>
-        <View>
-          <T className="text-lg font-cinzel-bold text-white">Nivel {userLevel}</T>
-          <View className="flex-row items-center">
-            <Dumbbell color={'white'} width={15} />
-            <T className='text-white font-cinzel  ml-2'>Físico: {user.physicalPoints}</T>
-          </View>
-          <View className="flex-row items-center">
-            <Brain color={'white'} width={15} />
-            <T className='text-white font-cinzel  ml-2'>Mental: {user.physicalPoints}</T>
-          </View>
-          <View className="flex-row items-center">
-            <Heart color={'white'} width={15} />
-            <T className='text-white font-cinzel  ml-2'>Espiritual: {user.physicalPoints}</T>
-          </View>
-          <View className="flex-row items-center">
-            <Target color={'white'} width={15} />
-            <T className='text-white font-cinzel  ml-2'>Disciplina: {user.physicalPoints}</T>
-          </View>
-          <View className="flex-row items-center">
-            <Users color={'white'} width={15} />
-            <T className='text-white font-cinzel  ml-2'>Social: {user.physicalPoints}</T>
-          </View>
-        </View>
-      </View>
-    </BlurredCard>
-  );
-};
+//   return (
+//     <BlurredCard backgroundImage={getBackgroundByLevel(userLevel)}>
+//       <View className="flex-row items-center gap-4">
+//         <View className="relative">
+//           <View className="w-32 h-32 overflow-hidden">
+//             <Image source={getPiruNivelImage()} className="w-full h-full" style={{ objectFit: 'contain' }} />
+//           </View>
+//         </View>
+//         <View>
+//           <T className="text-lg font-cinzel-bold text-white">Nivel {userLevel}</T>
+//           <View className="flex-row items-center">
+//             <Dumbbell color={'white'} width={15} />
+//             <T className='text-white font-cinzel  ml-2'>Físico: {user.physicalPoints}</T>
+//           </View>
+//           <View className="flex-row items-center">
+//             <Brain color={'white'} width={15} />
+//             <T className='text-white font-cinzel  ml-2'>Mental: {user.physicalPoints}</T>
+//           </View>
+//           <View className="flex-row items-center">
+//             <Heart color={'white'} width={15} />
+//             <T className='text-white font-cinzel  ml-2'>Espiritual: {user.physicalPoints}</T>
+//           </View>
+//           <View className="flex-row items-center">
+//             <Target color={'white'} width={15} />
+//             <T className='text-white font-cinzel  ml-2'>Disciplina: {user.physicalPoints}</T>
+//           </View>
+//           <View className="flex-row items-center">
+//             <Users color={'white'} width={15} />
+//             <T className='text-white font-cinzel  ml-2'>Social: {user.physicalPoints}</T>
+//           </View>
+//         </View>
+//       </View>
+//     </BlurredCard>
+//   );
+// };
 
 
 // Confetti Animation Component
@@ -627,6 +628,28 @@ const Confetti = ({ onDone }: { onDone?: () => void }) => {
 };
 
 
+// Helper functions
+const getCategoryIcon = (category: string) => {
+  switch (category) {
+    case 'Físico': return <Dumbbell color={'white'} size={16} />;
+    case 'Mental': return <Brain color={'white'} size={16} />;
+    case 'Espiritual': return <Heart color={'white'} size={16} />;
+    case 'Disciplina': return <Target color={'white'} size={16} />;
+    case 'Social': return <Users color={'white'} size={16} />;
+    case 'Intelecto': return <BookOpen color={'white'} size={16} />;
+    default: return <Target color={'white'} size={16} />;
+  }
+};
+
+const getDifficultyStars = (difficulty: string) => {
+  const starCount = difficulty === 'Fácil' ? 1 : difficulty === 'Medio' ? 2 : 3;
+  return Array.from({ length: 3 }, (_, index) => (
+    <T key={index} className="text-yellow-400 text-xs">
+      {index < starCount ? '★' : '☆'}
+    </T>
+  ));
+};
+
 // Habit Item Component with enhanced styling
 const HabitItem = ({ 
   habit, 
@@ -682,50 +705,66 @@ const HabitItem = ({
         onPress={handleComplete}
         activeOpacity={0.9}
         style={[
-          styles.ironButton,
+          styles.habitCard,
+          styles.habitCardUncompleted,
           isEditMode && { borderWidth: 2, borderColor: '#3b82f6' }
         ]}
       >
-      <View
-        style={styles.ironButtonGradient}
-      >
-        <View className="flex-row items-center justify-between p-4"  style={styles.ironButtonBorder}>
-          <View className="flex-row items-center gap-4 flex-1">
-            <View
-              className={`w-8 h-8 rounded-full items-center justify-center border-2 border-yellow-400/50 bg-white/10`}
-            >
-              
+        {habit.image && (
+          <Image 
+            source={habit.image} 
+            style={styles.habitImage}
+            resizeMode="cover"
+          />
+        )}
+        <View style={styles.habitContent}>
+          <View className="flex-row items-center justify-between p-4">
+            <View className="flex-row items-center gap-4 flex-1">
+              <View className="flex-1">
+                <View className="flex-row items-center gap-2 mb-2">
+                  <T
+                    className={`text-base text-white font-cinzel-bold`}
+                  >
+                    {habit.name}
+                  </T>
+                </View>
+                <View className="flex-row items-center gap-2">
+                  {habit.physical && <Dumbbell color={'white'} size={24} />}
+                  {habit.mental && <Brain color={'white'} size={24} />}
+                  {habit.spiritual && <Heart color={'white'} size={24} />}
+                  {habit.discipline && <Target color={'white'} size={24} />}
+                  {habit.social && <Users color={'white'} size={24} />}
+                </View>
+                {/* Difficulty stars */}
+                {habit.predefinedId && (() => {
+                  const predefinedHabit = AVAILABLE_HABITS.find(h => h.id === habit.predefinedId);
+                  return predefinedHabit ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                      <T className="text-white text-xs font-cinzel mr-1">Dificultad:</T>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        {getDifficultyStars(predefinedHabit.difficulty)}
+                      </View>
+                    </View>
+                  ) : null;
+                })()}
+              </View>
             </View>
 
-            <View className="flex-1">
-              <View className="flex-row items-center gap-2 mb-2">
-                <T
-                  className={`text-base text-white font-cinzel-bold`}
-                >
-                  {habit.name}
-                </T>
+            <View className="items-end">
+              <View className="flex-row items-center gap-1 mb-1">
+                <FlameIcon />
+                <T className="text-xl font-cinzel-bold text-yellow-400">{habit.currentStreak}</T>
               </View>
-              <View className="flex-row items-center gap-2">
-                {habit.physical && <Dumbbell color={'white'} size={24} />}
-                {habit.mental && <Brain color={'white'} size={24} />}
-                {habit.spiritual && <Heart color={'white'} size={24} />}
-                {habit.discipline && <Target color={'white'} size={24} />}
-                {habit.social && <Users color={'white'} size={24} />}
+              <View className="flex-row items-center gap-1">
+                <ClockIcon />
+                <T className="text-xs font-cinzel text-white/70">{habit.reminderTime}</T>
               </View>
-            </View>
-          </View>
-
-          <View className="items-end">
-            <View className="flex-row items-center gap-1 mb-1">
-              <FlameIcon />
-              <T className="text-xl font-cinzel-bold text-yellow-400">{habit.currentStreak}</T>
-            </View>
-            <View className="flex-row items-center gap-1">
-              <ClockIcon />
-              <T className="text-xs font-cinzel text-white/70">{habit.reminderTime}</T>
             </View>
           </View>
         </View>
+        {/* Completion circle */}
+        <View style={styles.completionCircle}>
+          <View style={styles.completionCircleInner} />
         </View>
       </TouchableOpacity>
 
@@ -765,63 +804,82 @@ const HabitItem = ({
   return (
     <View className="relative">
       <TouchableOpacity
-        className={`rounded-2xl border mb-4 p-4`}
         style={[
-          { borderColor: 'rgba(255,255,255,0.2)' },
+          styles.habitCard,
+          styles.habitCardCompleted,
           isEditMode && { borderColor: '#3b82f6', borderWidth: 2 }
         ]}
         onPress={handleComplete}
         activeOpacity={0.8}
       >
-        <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center gap-4 flex-1">
-            <View
-              className={`w-8 h-8 rounded-full items-center justify-center`}
-            >
-              <FlameIcon />
+        {habit.image && (
+          <Image 
+            source={habit.image} 
+            style={[styles.habitImage, styles.habitImageCompleted]}
+            resizeMode="cover"
+          />
+        )}
+        <View style={styles.habitContent}>
+          <View className="flex-row items-center justify-between p-4">
+            <View className="flex-row items-center gap-4 flex-1">
+              <View className="flex-1">
+                <View className="flex-row items-center gap-2 mb-2">
+                  <T
+                    className={`text-base text-white font-cinzel-bold line-through opacity-70`}
+                  >
+                    {habit.name}
+                  </T>
+                </View>
+                <View className="flex-row items-center gap-2">
+                  {habit.physical && <Dumbbell color={'white'} size={24} />}
+                  {habit.mental && <Brain color={'white'} size={24} />}
+                  {habit.spiritual && <Heart color={'white'} size={24} />}
+                  {habit.discipline && <Target color={'white'} size={24} />}
+                  {habit.social && <Users color={'white'} size={24} />}
+                </View>
+                {/* Difficulty stars */}
+                {habit.predefinedId && (() => {
+                  const predefinedHabit = AVAILABLE_HABITS.find(h => h.id === habit.predefinedId);
+                  return predefinedHabit ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                      <T className="text-white text-xs font-cinzel mr-1">Dificultad:</T>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        {getDifficultyStars(predefinedHabit.difficulty)}
+                      </View>
+                    </View>
+                  ) : null;
+                })()}
+              </View>
             </View>
 
-            <View className="flex-1">
-              <View className="flex-row items-center gap-2 mb-2">
-                <T
-                  className={`text-base text-white font-cinzel-bold line-through opacity-70`}
-                >
-                  {habit.name}
-                </T>
+            <View className="items-end">
+              <View className="flex-row items-center gap-1 mb-1">
+                <FlameIcon />
+                <T className="text-xl font-cinzel-bold text-yellow-400">{habit.currentStreak}</T>
               </View>
-              <View className="flex-row items-center gap-2">
-                {habit.physical && <Dumbbell color={'white'} size={24} />}
-                {habit.mental && <Brain color={'white'} size={24} />}
-                {habit.spiritual && <Heart color={'white'} size={24} />}
-                {habit.discipline && <Target color={'white'} size={24} />}
-                {habit.social && <Users color={'white'} size={24} />}
+              <View className="flex-row items-center gap-1">
+                <ClockIcon />
+                <T className="text-xs font-cinzel text-white/70">{habit.reminderTime}</T>
               </View>
             </View>
           </View>
-
-          <View className="items-end">
-            <View className="flex-row items-center gap-1 mb-1">
-              <FlameIcon />
-              <T className="text-xl font-cinzel-bold text-yellow-400">{habit.currentStreak}</T>
-            </View>
-            <View className="flex-row items-center gap-1">
-              <ClockIcon />
-              <T className="text-xs font-cinzel text-white/70">{habit.reminderTime}</T>
-            </View>
-          </View>
+        </View>
+        {/* Completed checkmark */}
+        <View style={styles.completedCheckmark}>
+          <T className="text-white text-lg font-bold">✓</T>
         </View>
       </TouchableOpacity>
 
       {/* Edit/Delete buttons when in edit mode */}
       {isEditMode && (
         <View className="absolute top-2 right-2 flex-row gap-2">
-          <TouchableOpacity
+          {/* <TouchableOpacity
             onPress={handleEdit}
             className="w-8 h-8 rounded-full bg-blue-500 items-center justify-center"
             activeOpacity={0.8}
           >
             <Edit3 color="white" size={16} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <TouchableOpacity
             onPress={handleDelete}
             className={`w-8 h-8 rounded-full items-center justify-center ${
@@ -851,7 +909,7 @@ export default function HomePage({navigation}: any) {
   const [showLevelUpModal, setShowLevelUpModal] = useState(false);
 
   useEffect(() => {
-    // navigation.navigate('Pricing');
+    // navigation.navigate('SelectHabits');
     refreshHabits();
     
     // Limpiar notificaciones huérfanas al cargar la app
@@ -944,7 +1002,7 @@ export default function HomePage({navigation}: any) {
               <WeeklyCalendar userLevel={user?.level || 1} />
 
               {/* Mascot Section */}
-              <MascotSection userLevel={user?.level || 1} user={user} />
+              {/* <MascotSection userLevel={user?.level || 1} user={user} /> */}
             </View>
 
             {/* Scrollable Habits Section */}
@@ -966,7 +1024,18 @@ export default function HomePage({navigation}: any) {
                   overflow: 'hidden',
                 }}
               >
-                <View style={styles.ironButtonBorder}>
+                <View style={{
+                  width: '100%',
+                  paddingHorizontal: 16,
+                  paddingVertical: 14,
+                  borderRadius: 12,
+                  borderWidth: 3,
+                  borderTopColor: '#4a4a4a',
+                  borderLeftColor: '#4a4a4a',
+                  borderRightColor: '#1a1a1a',
+                  borderBottomColor: '#1a1a1a', 
+                  backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                }}>
                   <View className="flex-row items-center justify-between">
                     <View className="flex-row items-center gap-3">
                       <Sword color="#fbbf24" size={24} />
@@ -1016,7 +1085,7 @@ export default function HomePage({navigation}: any) {
                       </TouchableOpacity>
                    </View>
                   <View className="gap-4">
-                                         {uncompletedHabits.map((habit: Habit) => (
+                    {uncompletedHabits.map((habit: Habit) => (
                        <HabitItem
                          key={habit.id}
                          habit={habit}
@@ -1025,7 +1094,7 @@ export default function HomePage({navigation}: any) {
                          onEdit={handleEditHabit}
                          onDelete={handleDeleteHabit}
                          isDeleting={deletingHabitId === habit.id}
-                         onStartCelebration={handleStartCelebration}
+                         onStartCelebration={() => handleStartCelebration(habit)}
                        />
                      ))}
                   </View>
@@ -1051,7 +1120,7 @@ export default function HomePage({navigation}: any) {
                          onEdit={handleEditHabit}
                          onDelete={handleDeleteHabit}
                          isDeleting={deletingHabitId === habit.id}
-                         onStartCelebration={handleStartCelebration}
+                         onStartCelebration={() => handleStartCelebration(habit)}
                        />
                      ))}
                   </View>
@@ -1088,7 +1157,7 @@ export default function HomePage({navigation}: any) {
                 }}>
                   <View className="flex-row items-center justify-center gap-3">
                     <Plus color={'black'} size={20}/>
-                    <T className="text-base font-cinzel-bold text-black">Crear Nuevo Hábito</T>
+                    <T className="text-base font-cinzel-bold text-black">Agregar Hábitos</T>
                   </View>
                 </View>
               </TouchableOpacity>
@@ -1141,7 +1210,7 @@ export default function HomePage({navigation}: any) {
               <View className="flex-row items-center gap-2 mb-3">
                 <Zap color="#FCD34D" size={24} />
                 <T className="text-white text-xl font-cinzel-bold">
-                  +10 XP
+                  + {celebrationHabit?.experienceReward} XP
                 </T>
               </View>
               
@@ -1150,7 +1219,7 @@ export default function HomePage({navigation}: any) {
                 <View className="flex-row items-center gap-2 px-3 py-2 rounded-lg my-1">
                   <Dumbbell color="#EF4444" size={20} />
                   <T className="text-white text-sm font-cinzel-bold">
-                    +1 Pts. en Físico
+                    +{celebrationHabit?.experienceReward/10} Pts. en Físico
                   </T>
                 </View>
               )}
@@ -1158,7 +1227,7 @@ export default function HomePage({navigation}: any) {
                 <View className="flex-row items-center gap-2   px-3 py-2 rounded-lg my-1">
                   <Brain color="#3B82F6" size={20} />
                   <T className="text-white text-sm font-cinzel-bold">
-                    +1 Pts. en Mental
+                    +{celebrationHabit?.experienceReward/10} Pts. en Mental
                   </T>
                 </View>
               )}
@@ -1166,7 +1235,7 @@ export default function HomePage({navigation}: any) {
                 <View className="flex-row items-center gap-2   px-3 py-2 rounded-lg my-1">
                   <Heart color="#10B981" size={20} />
                   <T className="text-white text-sm font-cinzel-bold">
-                    +1 Pts. en Espiritual
+                    +{celebrationHabit?.experienceReward/10} Pts. en Espiritual
                   </T>
                 </View>
               )}
@@ -1174,7 +1243,7 @@ export default function HomePage({navigation}: any) {
                 <View className="flex-row items-center gap-2  px-3 py-2 rounded-lg my-1">
                   <Target color="#F59E0B" size={20} />
                   <T className="text-white text-sm font-cinzel-bold">
-                    +1 Pts. en Disciplina
+                    +{celebrationHabit?.experienceReward/10} Pts. en Disciplina
                   </T>
                 </View>
               )}
@@ -1182,7 +1251,7 @@ export default function HomePage({navigation}: any) {
                 <View className="flex-row items-center gap-2   px-3 py-2 rounded-lg my-1">
                   <Users color="#8B5CF6" size={20} />
                   <T className="text-white text-sm font-cinzel-bold">
-                    +1 Pts. en Social
+                    +{celebrationHabit?.experienceReward/10} Pts. en Social
                   </T>
                 </View>
               )}
@@ -1225,27 +1294,62 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 12,
   },
-  ironButtonGradient: {
-    flex: 1,
+  habitCard: {
+    flexDirection: 'column',
     borderRadius: 12,
+    borderWidth: 1,
     overflow: 'hidden',
+    marginBottom: 16,
   },
-  ironButtonBorder: {
+  habitCardUncompleted: {
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  habitCardCompleted: {
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderColor: 'rgba(34, 197, 94, 0.3)',
+    opacity: 0.8,
+  },
+  habitImage: {
     width: '100%',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 3,
-    borderTopColor: '#4a4a4a',
-    borderLeftColor: '#4a4a4a',
-    borderRightColor: '#1a1a1a',
-    borderBottomColor: '#1a1a1a', 
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',  
+    height: 120,
   },
-  ironButton: {
+  habitImageCompleted: {
+    opacity: 0.6,
+  },
+  habitContent: {
     flex: 1,
-    paddingVertical: 16,
-    borderRadius: 12,
-    overflow: 'hidden',
+  },
+  completionCircle: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  completionCircleInner: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  completedCheckmark: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(34, 197, 94, 0.8)',
+    borderWidth: 2,
+    borderColor: 'rgba(34, 197, 94, 1)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 }); 

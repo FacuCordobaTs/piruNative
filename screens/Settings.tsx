@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View,SafeAreaView, TouchableOpacity, Switch, ScrollView, Alert, ImageBackground, Platform, Linking } from 'react-native';
+import { View,SafeAreaView, TouchableOpacity, Switch, ScrollView, Alert, Platform, Linking } from 'react-native';
 import { 
   ArrowLeft, 
   Bell, 
@@ -19,16 +19,17 @@ import { T } from '../components/T';
 import { useUser } from '../context/userProvider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Purchases from 'react-native-purchases';
+import RevenueCatUI from 'react-native-purchases-ui';
 
-const backgroundImage = require('../assets/images/medieval-house-bg.jpg');
+// Minimal black theme – no background image
 
 const GlassCard = ({ children, style }: { children: React.ReactNode, style?: any }) => (
   <View style={[{
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 16,
+    backgroundColor: 'transparent',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    padding: 16,
+    borderColor: '#1f1f1f',
+    padding: 12,
     marginBottom: 16,
   }, style]}>
     {children}
@@ -63,42 +64,32 @@ const SettingItem = ({
     style={{
       flexDirection: 'row',
       alignItems: 'center',
-      paddingVertical: 12,
+      paddingVertical: 14,
       paddingHorizontal: 4,
+      borderBottomWidth: 1,
+      borderBottomColor: '#1f1f1f',
     }}
   >
-    <View style={{
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: danger ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginRight: 12,
-    }}>
-      <Icon size={20} color={danger ? '#ef4444' : 'white'} />
-    </View>
-    
+    <Icon size={20} color={danger ? '#ef4444' : '#e5e7eb'} style={{ marginRight: 12 }} />
     <View style={{ flex: 1 }}>
-      <T className={`font-cinzel-bold text-white ${danger ? 'text-red-400' : ''}`}>
+      <T className={`text-white ${danger ? 'text-red-400' : ''}`}>
         {title}
       </T>
       {subtitle && (
-        <T className="text-white/60 text-sm mt-1">
+        <T className="text-white/50 text-sm mt-1">
           {subtitle}
         </T>
       )}
     </View>
-    
     {showSwitch ? (
       <Switch
         value={switchValue}
         onValueChange={onSwitchChange}
-        trackColor={{ false: 'rgba(255, 255, 255, 0.2)', true: '#f59e0b' }}
+        trackColor={{ false: '#1f1f1f', true: '#f59e0b' }}
         thumbColor={switchValue ? '#ffffff' : '#f4f3f4'}
       />
     ) : showArrow && (
-      <ArrowLeft size={20} color="white" style={{ transform: [{ rotate: '180deg' }] }} />
+      <ArrowLeft size={20} color="#e5e7eb" style={{ transform: [{ rotate: '180deg' }] }} />
     )}
   </TouchableOpacity>
 );
@@ -107,6 +98,35 @@ export default function SettingsScreen({navigation} : any) {
   const { user, logout, isSuscribed } = useUser();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
+
+  const openCustomerCenter = async () => {
+    try {
+      await RevenueCatUI.presentCustomerCenter({
+        callbacks: {
+          onFeedbackSurveyCompleted: () => {},
+          onShowingManageSubscriptions: () => {},
+          onRestoreStarted: () => {},
+          onRestoreCompleted: () => {},
+          onRestoreFailed: () => {},
+          onRefundRequestStarted: () => {},
+          onRefundRequestCompleted: () => {},
+          onManagementOptionSelected: () => {},
+        },
+      });
+    } catch (error) {
+      console.error('Error presenting RevenueCat Customer Center:', error);
+    } finally {
+      try {
+        const info = await Purchases.getCustomerInfo();
+        const isActive = typeof info.entitlements?.active?.["Suscripción Piru"] !== 'undefined';
+        if (!isActive) {
+          navigation.navigate('Initial');
+        }
+      } catch (e) {
+        console.error('Error refreshing customer info after Customer Center:', e);
+      }
+    }
+  };
 
   const handleSignOut = () => {
     Alert.alert(
@@ -135,7 +155,7 @@ export default function SettingsScreen({navigation} : any) {
       // Get current customer info to check subscription status
       const customerInfo = await Purchases.getCustomerInfo();
       
-      if (customerInfo.entitlements.active["entl5c603c8e6c"]) {
+      if (typeof customerInfo.entitlements.active["Suscripción Piru"] !== "undefined") {
         // User has an active subscription, show cancellation options
         Alert.alert(
           'Cancelar Suscripción',
@@ -276,37 +296,33 @@ export default function SettingsScreen({navigation} : any) {
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <ImageBackground source={backgroundImage} style={{ flex: 1 }}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.7)' }}>
-          <SafeAreaView style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: '#000' }}>
+      <SafeAreaView style={{ flex: 1 }}>
             {/* Header */}
             <View style={{
               flexDirection: 'row',
               alignItems: 'center',
               paddingHorizontal: 16,
               paddingVertical: 12,
-              marginTop: 32,
+              marginTop: 16,
               borderBottomWidth: 1,
-              borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+              borderBottomColor: '#1f1f1f',
             }}>
               <TouchableOpacity
                 onPress={() => navigation.goBack()}
                 style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 20,
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  padding: 8,
+                  borderRadius: 8,
                   alignItems: 'center',
                   justifyContent: 'center',
                   marginRight: 12,
                 }}
                 activeOpacity={0.7}
               >
-                <ArrowLeft size={20} color="white" />
+                <ArrowLeft size={20} color="#e5e7eb" />
               </TouchableOpacity>
               
-              <T className="font-cinzel-bold text-white text-lg">
+              <T className="text-white text-lg">
                 Configuración
               </T>
             </View>
@@ -316,31 +332,21 @@ export default function SettingsScreen({navigation} : any) {
               showsVerticalScrollIndicator={false}
             >
               {/* User Info */}
-              <GlassCard>
-                <View style={{ alignItems: 'center', marginBottom: 16 }}>
-                  <View style={{
-                    width: 80,
-                    height: 80,
-                    borderRadius: 40,
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: 12,
-                  }}>
-                    <Crown size={32} color="#f59e0b" />
-                  </View>
-                  <T className="font-cinzel-bold text-white text-lg">
-                    {user?.name || 'Héroe'}
-                  </T>
-                  <T className="text-white/60 text-sm">
-                    Nivel {user?.level} • {user?.email}
-                  </T>
+              <View style={{ paddingVertical: 12, marginBottom: 16 }}>
+                <View style={{ alignItems: 'center', marginBottom: 8 }}>
+                  <Crown size={28} color="#f59e0b" />
                 </View>
-              </GlassCard>
+                <T className="text-white text-lg" style={{ textAlign: 'center' }}>
+                  {user?.name || 'Héroe'}
+                </T>
+                <T className="text-white/50 text-sm" style={{ textAlign: 'center', marginTop: 4 }}>
+                  Nivel {user?.level} • {user?.email}
+                </T>
+              </View>
 
               {/* Notifications */}
               <GlassCard>
-                <T className="font-cinzel-bold text-white text-lg mb-4">
+                <T className="text-white text-sm mb-2">
                   Notificaciones
                 </T>
                 <SettingItem
@@ -356,7 +362,7 @@ export default function SettingsScreen({navigation} : any) {
 
               {/* Preferences */}
               <GlassCard>
-                <T className="font-cinzel-bold text-white text-lg mb-4">
+                <T className="text-white text-sm mb-2">
                   Preferencias
                 </T>
                 <SettingItem
@@ -378,7 +384,7 @@ export default function SettingsScreen({navigation} : any) {
 
               {/* Support */}
               <GlassCard>
-                <T className="font-cinzel-bold text-white text-lg mb-4">
+                <T className="text-white text-sm mb-2">
                   Soporte
                 </T>
                 <SettingItem
@@ -397,7 +403,7 @@ export default function SettingsScreen({navigation} : any) {
 
               {/* Account Actions */}
               <GlassCard>
-                <T className="font-cinzel-bold text-white text-lg mb-4">
+                <T className="text-white text-sm mb-2">
                   Cuenta
                 </T>
                 <SettingItem
@@ -410,17 +416,8 @@ export default function SettingsScreen({navigation} : any) {
                   <SettingItem
                     icon={CreditCard}
                     title="Gestionar Suscripción"
-                    subtitle="Ver detalles y cambiar planes"
-                    onPress={handleCancelSubscription}
-                  />
-                )}
-                {isSuscribed && (
-                  <SettingItem
-                    icon={Trash2}
-                    title="Cancelar Suscripción"
-                    subtitle="Cancelar tu suscripción activa"
-                    onPress={handleUnsubscribe}
-                    danger={true}
+                    subtitle="Ver o cancelar suscripción"
+                    onPress={openCustomerCenter}
                   />
                 )}
                 <SettingItem
@@ -433,8 +430,8 @@ export default function SettingsScreen({navigation} : any) {
               </GlassCard>
 
               {/* Danger Zone */}
-              <GlassCard style={{ borderColor: 'rgba(239, 68, 68, 0.3)' }}>
-                <T className="font-cinzel-bold text-red-400 text-lg mb-4">
+              <GlassCard style={{ borderColor: '#3f1f1f' }}>
+                <T className="text-red-400 text-sm mb-2">
                   Zona de Peligro
                 </T>
                 <SettingItem
@@ -456,9 +453,7 @@ export default function SettingsScreen({navigation} : any) {
                 </T>
               </View>
             </ScrollView>
-          </SafeAreaView>
-        </View>
-      </ImageBackground>
+      </SafeAreaView>
     </View>
   );
 }

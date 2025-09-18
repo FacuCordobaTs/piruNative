@@ -18,10 +18,6 @@
       "associatedDomains": ["applinks:piru.app"]
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/piru-logo-white.png",
-        "backgroundColor": "#ffffff"
-      },
       "edgeToEdgeEnabled": true,
       "package": "com.piru.app",
       "intentFilters": [
