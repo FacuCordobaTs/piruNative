@@ -9,10 +9,12 @@ import {
   TextInput,
   StyleSheet,
   useWindowDimensions,
+  Animated,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { T } from '../components/T';
 import { useUser } from '../context/userProvider';
+import { useSound } from '../hooks/useSound';
 
 // Importa tus imágenes desde la ruta correcta
 const backgroundImage = require('../assets/images/landscape-quiz.jpg');
@@ -198,44 +200,100 @@ const BlurredCard = ({ children, style }: { children: React.ReactNode, style?: a
 };
 
 // Componente IronButton con estilo medieval
-const IronButton = ({ onPress, disabled, children, style }: { onPress: () => void, disabled?: boolean, children: React.ReactNode, style?: any }) => (
-  <TouchableOpacity
-    onPress={onPress}
-    disabled={disabled}
-    activeOpacity={0.9}
-    style={[styles.ironButton, disabled ? styles.ironButtonDisabled : {}, style]}
-  >
-    <View
-      style={styles.ironButtonGradient}
+const IronButton = ({ onPress, disabled, children, style }: { onPress: () => void, disabled?: boolean, children: React.ReactNode, style?: any }) => {
+  const scaleValue = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    if (!disabled) {
+      Animated.spring(scaleValue, {
+        toValue: 0.95,
+        useNativeDriver: true,
+        tension: 300,
+        friction: 10,
+      }).start();
+    }
+  };
+
+  const handlePressOut = () => {
+    if (!disabled) {
+      Animated.spring(scaleValue, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 300,
+        friction: 10,
+      }).start();
+    }
+  };
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={disabled}
+      activeOpacity={1}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={[styles.ironButton, disabled ? styles.ironButtonDisabled : {}, style]}
     >
+      <Animated.View
+        style={[styles.ironButtonGradient, { transform: [{ scale: scaleValue }] }]}
+      >
         <View style={styles.ironButtonBorder}>
-         <T className="text-white font-cinzel text-base text-center">
-           {children}
-         </T>
-       </View>
-    </View>
-  </TouchableOpacity>
-);
+          <T className="text-white font-cinzel text-base text-center">
+            {children}
+          </T>
+        </View>
+      </Animated.View>
+    </TouchableOpacity>
+  );
+};
 
 // Componente GoldButton con estilo medieval
-const GoldButton = ({ onPress, disabled, children, style }: { onPress: () => void, disabled?: boolean, children: React.ReactNode, style?: any }) => (
-  <TouchableOpacity
-    activeOpacity={0.9}
-    onPress={onPress}
-    disabled={disabled}
-    style={[styles.goldButton, disabled ? styles.goldButtonDisabled : {}, style]}
-  >
-    <View
-      style={styles.goldButtonGradient}
+const GoldButton = ({ onPress, disabled, children, style }: { onPress: () => void, disabled?: boolean, children: React.ReactNode, style?: any }) => {
+  const scaleValue = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    if (!disabled) {
+      Animated.spring(scaleValue, {
+        toValue: 0.95,
+        useNativeDriver: true,
+        tension: 300,
+        friction: 10,
+      }).start();
+    }
+  };
+
+  const handlePressOut = () => {
+    if (!disabled) {
+      Animated.spring(scaleValue, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 300,
+        friction: 10,
+      }).start();
+    }
+  };
+
+  return (
+    <TouchableOpacity
+      activeOpacity={1}
+      onPress={onPress}
+      disabled={disabled}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={[styles.goldButton, disabled ? styles.goldButtonDisabled : {}, style]}
     >
-             <View style={styles.goldButtonBorder}>
-         <T className="text-black font-cinzel-bold text-base text-center">
-           {children}
-         </T>
-       </View>
-    </View>
-  </TouchableOpacity>
-);
+      <Animated.View
+        style={[styles.goldButtonGradient, { transform: [{ scale: scaleValue }] }]}
+      >
+        <View style={styles.goldButtonBorder}>
+          <T className="text-black font-cinzel-bold text-base text-center">
+            {children}
+          </T>
+        </View>
+      </Animated.View>
+    </TouchableOpacity>
+  );
+};
 
 const OptionButton = ({ onPress, active, icon, label }: { onPress: () => void, active: boolean, icon?: string, label: string }) => (
   <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.optionButtonWrapper}>
@@ -248,7 +306,8 @@ const OptionButton = ({ onPress, active, icon, label }: { onPress: () => void, a
 
 export default function QuizPage({navigation}: any) {
   const { completeQuiz } = useUser();
-  
+  const { playButtonSound, playSuccessSound, playSelectOptionSound } = useSound();
+
   // Estado para el paso actual del quiz
   const [step, setStep] = useState('name');
   // Historial para el botón "Atrás"
@@ -406,7 +465,7 @@ export default function QuizPage({navigation}: any) {
     };
     saveQuizData();
     completeQuiz({ name: form.name, age: Number(form.age) }); // Pasa los datos necesarios
-    navigation.navigate('Loading');
+    navigation.replace('Loading');
   };
 
   // --- RENDERIZADO DE PREGUNTAS ---
@@ -449,14 +508,15 @@ export default function QuizPage({navigation}: any) {
                     icon={g.icon}
                     label={g.label}
                     active={form.goals.includes(g.id)}
-                    onPress={() =>
+                    onPress={() => {
+                      playSelectOptionSound();
                         setForm((prev) => ({
                         ...prev,
                         goals: prev.goals.includes(g.id)
                             ? prev.goals.filter((x) => x !== g.id)
                             : [...prev.goals, g.id],
                         }))
-                    }
+                    }}
                     />
                 ))}
                 </View>
@@ -469,7 +529,10 @@ export default function QuizPage({navigation}: any) {
                 <T className="font-cinzel-bold text-white mb-4 text-xl">¿Con qué frecuencia consumes pornografía?</T>
                 <View style={styles.optionsContainer}>
                     {nofapFrequency.map((o) => (
-                        <OptionButton key={o.id} label={o.label} active={form.nofap_frequency === o.id} onPress={() => setForm({ ...form, nofap_frequency: o.id })} />
+                        <OptionButton key={o.id} label={o.label} active={form.nofap_frequency === o.id} onPress={() => {
+                          playSelectOptionSound();
+                          setForm({ ...form, nofap_frequency: o.id });
+                        }} />
                     ))}
                 </View>
             </View>
@@ -480,7 +543,10 @@ export default function QuizPage({navigation}: any) {
                 <T className="font-cinzel-bold text-white mb-4 text-xl">¿Tu frecuencia de consumo aumentó con el tiempo?</T>
                 <View style={styles.optionsContainer}>
                     {yesNoOptions.map((o) => (
-                        <OptionButton key={o.id} label={o.label} active={form.nofap_frequency_increased === o.id} onPress={() => setForm({ ...form, nofap_frequency_increased: o.id })} />
+                        <OptionButton key={o.id} label={o.label} active={form.nofap_frequency_increased === o.id} onPress={() => {
+                          playSelectOptionSound();
+                          setForm({ ...form, nofap_frequency_increased: o.id });
+                        }} />
                     ))}
                 </View>
             </View>
@@ -491,7 +557,10 @@ export default function QuizPage({navigation}: any) {
                 <T className="font-cinzel-bold text-white mb-4 text-xl">¿Te sientes atraído a ver contenido cada vez más explícito?</T>
                 <View style={styles.optionsContainer}>
                     {yesNoOptions.map((o) => (
-                        <OptionButton key={o.id} label={o.label} active={form.nofap_explicit_content === o.id} onPress={() => setForm({ ...form, nofap_explicit_content: o.id })} />
+                        <OptionButton key={o.id} label={o.label} active={form.nofap_explicit_content === o.id} onPress={() => {
+                          playSelectOptionSound();
+                          setForm({ ...form, nofap_explicit_content: o.id });
+                        }} />
                     ))}
                 </View>
             </View>
@@ -502,7 +571,10 @@ export default function QuizPage({navigation}: any) {
                 <T className="font-cinzel-bold text-white mb-4 text-xl">¿Cuáles crees que son las causas principales de tus recaídas?</T>
                 <View style={styles.optionsContainer}>
                     {relapseCauses.map((o) => (
-                        <OptionButton key={o.id} label={o.label} active={form.nofap_relapse_causes?.includes(o.id) || false} onPress={() => setForm(prev => ({...prev, nofap_relapse_causes: prev.nofap_relapse_causes?.includes(o.id) ? prev.nofap_relapse_causes.filter(i => i !== o.id) : [...(prev.nofap_relapse_causes || []), o.id]}))} />
+                        <OptionButton key={o.id} label={o.label} active={form.nofap_relapse_causes?.includes(o.id) || false} onPress={() => {
+                          playSelectOptionSound();
+                          setForm(prev => ({...prev, nofap_relapse_causes: prev.nofap_relapse_causes?.includes(o.id) ? prev.nofap_relapse_causes.filter(i => i !== o.id) : [...(prev.nofap_relapse_causes || []), o.id]}));
+                        }} />
                     ))}
                 </View>
             </View>
@@ -522,7 +594,10 @@ export default function QuizPage({navigation}: any) {
                 <T className="font-cinzel-bold text-white mb-4 text-xl">¿Actualmente ya haces algún deporte?</T>
                 <View style={styles.optionsContainer}>
                     {sports.map((o) => (
-                        <OptionButton key={o.id} icon={o.icon} label={o.label} active={form.training_current_sport === o.id} onPress={() => setForm({ ...form, training_current_sport: o.id })} />
+                        <OptionButton key={o.id} icon={o.icon} label={o.label} active={form.training_current_sport === o.id} onPress={() => {
+                          playSelectOptionSound();
+                          setForm({ ...form, training_current_sport: o.id });
+                        }} />
                     ))}
                 </View>
             </View>
@@ -533,7 +608,10 @@ export default function QuizPage({navigation}: any) {
                 <T className="font-cinzel-bold text-white mb-4 text-xl">¿Cuántas veces a la semana {form.training_current_sport === 'none' ? 'te gustaría hacer' : 'haces'} ejercicio?</T>
                 <View style={styles.optionsContainer}>
                     {trainingFrequency.map((o) => (
-                        <OptionButton key={o.id} label={o.label} active={form.training_frequency === o.id} onPress={() => setForm({ ...form, training_frequency: o.id })} />
+                        <OptionButton key={o.id} label={o.label} active={form.training_frequency === o.id} onPress={() => {
+                          playSelectOptionSound();
+                          setForm({ ...form, training_frequency: o.id });
+                        }} />
                     ))}
                 </View>
             </View>
@@ -544,7 +622,10 @@ export default function QuizPage({navigation}: any) {
                 <T className="font-cinzel-bold text-white mb-4 text-xl">¿Cuál es la causa principal por la que no eres constante?</T>
                 <View style={styles.optionsContainer}>
                     {trainingCauses.map((o) => (
-                        <OptionButton key={o.id} label={o.label} active={form.training_consistency_cause === o.id} onPress={() => setForm({ ...form, training_consistency_cause: o.id })} />
+                        <OptionButton key={o.id} label={o.label} active={form.training_consistency_cause === o.id} onPress={() => {
+                          playSelectOptionSound();
+                          setForm({ ...form, training_consistency_cause: o.id });
+                        }} />
                     ))}
                 </View>
             </View>
@@ -564,7 +645,10 @@ export default function QuizPage({navigation}: any) {
                   <T className="font-cinzel-bold text-white mb-4 text-xl">¿Cuántas horas duermes al día?</T>
                   <View style={styles.optionsContainer}>
                       {sleepHours.map((o) => (
-                          <OptionButton key={o.id} label={o.label} active={form.sleep_hours === o.id} onPress={() => setForm({ ...form, sleep_hours: o.id })} />
+                          <OptionButton key={o.id} label={o.label} active={form.sleep_hours === o.id} onPress={() => {
+                            playSelectOptionSound();
+                            setForm({ ...form, sleep_hours: o.id });
+                          }} />
                       ))}
                   </View>
               </View>
@@ -575,7 +659,10 @@ export default function QuizPage({navigation}: any) {
                   <T className="font-cinzel-bold text-white mb-4 text-xl">Cuando te despiertas, ¿te sientes cansado?</T>
                   <View style={styles.optionsContainer}>
                       {tiredOnWake.map((o) => (
-                          <OptionButton key={o.id} label={o.label} active={form.sleep_tired_on_wake === o.id} onPress={() => setForm({ ...form, sleep_tired_on_wake: o.id })} />
+                          <OptionButton key={o.id} label={o.label} active={form.sleep_tired_on_wake === o.id} onPress={() => {
+                            playSelectOptionSound();
+                            setForm({ ...form, sleep_tired_on_wake: o.id });
+                          }} />
                       ))}
                   </View>
               </View>
@@ -595,7 +682,10 @@ export default function QuizPage({navigation}: any) {
                   <T className="font-cinzel-bold text-white mb-4 text-xl">¿En qué momento del día sientes más cansancio?</T>
                   <View style={styles.optionsContainer}>
                       {tiredTime.map((o) => (
-                          <OptionButton key={o.id} label={o.label} active={form.energy_tired_time === o.id} onPress={() => setForm({ ...form, energy_tired_time: o.id })} />
+                          <OptionButton key={o.id} label={o.label} active={form.energy_tired_time === o.id} onPress={() => {
+                            playSelectOptionSound();
+                            setForm({ ...form, energy_tired_time: o.id });
+                          }} />
                       ))}
                   </View>
               </View>
@@ -606,7 +696,10 @@ export default function QuizPage({navigation}: any) {
                   <T className="font-cinzel-bold text-white mb-4 text-xl">En una escala del 1 al 5, ¿cómo calificarías tu energía actual?</T>
                   <View style={styles.optionsContainer}>
                       {energyLevels.map((o) => (
-                          <OptionButton key={o.id} label={o.label} active={form.energy_level === o.id} onPress={() => setForm({ ...form, energy_level: o.id })} />
+                          <OptionButton key={o.id} label={o.label} active={form.energy_level === o.id} onPress={() => {
+                            playSelectOptionSound();
+                            setForm({ ...form, energy_level: o.id });
+                          }} />
                       ))}
                   </View>
               </View>
@@ -626,7 +719,10 @@ export default function QuizPage({navigation}: any) {
                   <T className="font-cinzel-bold text-white mb-4 text-xl">¿Con qué facilidad te distraes?</T>
                   <View style={styles.optionsContainer}>
                       {distractionLevels.map((o) => (
-                          <OptionButton key={o.id} label={o.label} active={form.focus_distraction_level === o.id} onPress={() => setForm({ ...form, focus_distraction_level: o.id })} />
+                          <OptionButton key={o.id} label={o.label} active={form.focus_distraction_level === o.id} onPress={() => {
+                            playSelectOptionSound();
+                            setForm({ ...form, focus_distraction_level: o.id });
+                          }} />
                       ))}
                   </View>
               </View>
@@ -637,7 +733,10 @@ export default function QuizPage({navigation}: any) {
                   <T className="font-cinzel-bold text-white mb-4 text-xl">¿En qué situaciones necesitas mejorar tu enfoque?</T>
                   <View style={styles.optionsContainer}>
                       {focusSituations.map((o) => (
-                          <OptionButton key={o.id} label={o.label} active={form.focus_situations?.includes(o.id) || false} onPress={() => setForm(prev => ({...prev, focus_situations: prev.focus_situations?.includes(o.id) ? prev.focus_situations.filter(i => i !== o.id) : [...(prev.focus_situations || []), o.id]}))} />
+                          <OptionButton key={o.id} label={o.label} active={form.focus_situations?.includes(o.id) || false} onPress={() => {
+                            playSelectOptionSound();
+                            setForm(prev => ({...prev, focus_situations: prev.focus_situations?.includes(o.id) ? prev.focus_situations.filter(i => i !== o.id) : [...(prev.focus_situations || []), o.id]}));
+                          }} />
                       ))}
                   </View>
               </View>
@@ -657,7 +756,10 @@ export default function QuizPage({navigation}: any) {
                 <T className="font-cinzel-bold text-white mb-4 text-xl">¿A qué hora despiertas usualmente?</T>
                 <View style={styles.optionsContainer}>
                     {wakeUpTimes.map((o) => (
-                        <OptionButton key={o.id} label={o.label} active={form.wakeUpTime === o.id} onPress={() => setForm({ ...form, wakeUpTime: o.id })} />
+                        <OptionButton key={o.id} label={o.label} active={form.wakeUpTime === o.id} onPress={() => {
+                          playSelectOptionSound();
+                          setForm({ ...form, wakeUpTime: o.id });
+                        }} />
                     ))}
                 </View>
             </View>
@@ -668,7 +770,10 @@ export default function QuizPage({navigation}: any) {
                 <T className="font-cinzel-bold text-white mb-4 text-xl">¿En qué área quieres mejorar más?</T>
                 <View style={styles.optionsContainer}>
                     {areas.map((a) => (
-                        <OptionButton key={a.id} icon={a.icon} label={a.label} active={form.focusArea === a.id} onPress={() => setForm({ ...form, focusArea: a.id })} />
+                        <OptionButton key={a.id} icon={a.icon} label={a.label} active={form.focusArea === a.id} onPress={() => {
+                          playSelectOptionSound();
+                          setForm({ ...form, focusArea: a.id });
+                        }} />
                     ))}
                 </View>
             </View>
@@ -734,15 +839,20 @@ export default function QuizPage({navigation}: any) {
 
             {/* Controles de navegación */}
             <View style={styles.controlsContainer}>
-              <IronButton onPress={handleBack} disabled={history.length === 0}>
+              <IronButton onPress={() => {
+                handleBack();
+                playButtonSound();
+              }} disabled={history.length === 0}>
                 Atrás
               </IronButton>
 
               <GoldButton
                 onPress={() => {
                   if (step === 'commitment') {
+                    playSuccessSound();
                     handleComplete();
                   } else {
+                    playButtonSound();
                     handleNext();
                   }
                 }}

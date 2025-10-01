@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, SafeAreaView, Image, Animated, StyleSheet
 import { T } from '../components/T';
 import Purchases, { PurchasesOfferings, PurchasesPackage } from 'react-native-purchases';
 import { useUser } from '../context/userProvider';
+import { AnimatedButton } from '../components/AnimatedButton';
 
 // Import images
 const backgroundImage = require('../assets/images/pricing-landscape.jpg');
@@ -81,7 +82,7 @@ export default function PricingScreen({navigation}: any) {
     const checkSubscription = async () => {
       const customerInfo = await Purchases.getCustomerInfo();
       if (typeof customerInfo.entitlements.active["Suscripción Piru"] !== "undefined") {
-        navigation.navigate('Tabs');
+        navigation.replace('Tabs');
       }
     }
     checkSubscription();
@@ -99,7 +100,7 @@ export default function PricingScreen({navigation}: any) {
     const { customerInfo } = await Purchases.purchasePackage(pkg);
     console.log("customerInfo", JSON.stringify(customerInfo, null, 2));
     if (typeof customerInfo.entitlements.active["Suscripción Piru"] !== "undefined") {
-      navigation.navigate('Tabs');  
+      navigation.replace('Tabs');  
     }
   };
 
@@ -108,9 +109,13 @@ export default function PricingScreen({navigation}: any) {
       setIsLoading(true);
       const response = await handleReferal(referalCode);
       console.log("response", JSON.stringify(response, null, 2));
-      navigation.navigate('Tabs');  
-      // if (response.referalCode) {
-      // }
+
+      if (response.success) {
+        navigation.replace('Tabs');
+      }
+      else {
+        Alert.alert(response.message);
+      }
     } catch (error) {
       console.error("Error uploading referal code:", error);
     } finally {
@@ -221,38 +226,14 @@ export default function PricingScreen({navigation}: any) {
           </View>
           {/* CTA Button */}
           
-          <TouchableOpacity
-          style={{
-              paddingBottom: 8,
-              borderRadius: 12,
-              overflow: 'hidden',
-            }}
+          <AnimatedButton
             onPress={() => handleSuscribe(pkg)}
-            className="mt-5"
             disabled={isLoading}
           >
-            <View style={{
-            width: '100%',
-            paddingHorizontal: 30,
-            paddingVertical: 10,
-            borderRadius: 12,
-            borderWidth: 3,
-            borderTopColor: '#FFED4A',
-            borderLeftColor: '#FFED4A',
-            borderRightColor: '#B8860B',
-            borderBottomColor: '#B8860B',
-            shadowColor: '#DAA520',
-            backgroundColor: '#DAA520',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.8,
-            shadowRadius: 6,
-            elevation: 8,
-          }}>
             <View className="flex-row items-center justify-center gap-3">
             <T className="text-black font-cinzel-bold">{isLoading ? 'Comenzando...' : 'COMENZAR SUSCRIPCIÓN'}</T>
             </View>
-          </View>
-        </TouchableOpacity>
+          </AnimatedButton>
 
 
 
@@ -276,11 +257,11 @@ export default function PricingScreen({navigation}: any) {
                     placeholder="Código aquí..."
                     placeholderTextColor="rgba(255, 255, 255, 0.6)"
                     value={discountCode}
-                    onChangeText={setDiscountCode}
+                    onChangeText={(text) => setDiscountCode(text)}
                     autoCapitalize="characters"
                     autoCorrect={false}
                   />
-                    <TouchableOpacity
+                    <AnimatedButton
                     style={{
                         paddingVertical: 8,
                         borderRadius: 12,
@@ -311,7 +292,7 @@ export default function PricingScreen({navigation}: any) {
                       <T className="text-black font-cinzel-bold">{isLoading ? 'Aplicando...' : 'Aplicar'}</T>
                       </View>
                     </View>
-                  </TouchableOpacity>
+                  </AnimatedButton>
               </View>
             
           </GlassCard>

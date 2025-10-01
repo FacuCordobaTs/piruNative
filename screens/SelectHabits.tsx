@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, TouchableOpacity, SafeAreaView, Image, ScrollView, StyleSheet, useWindowDimensions, ImageBackground } from 'react-native';
+import { View, TouchableOpacity, SafeAreaView, Image, ScrollView, StyleSheet, useWindowDimensions, ImageBackground, Animated } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { T } from '../components/T';
-import { Brain, Dumbbell, Flame, Heart, Target, Users, Clock, BookOpen, Sun, Droplets, Smartphone, PenTool, BookMarked, Zap, Shield, Wine, Cross } from 'lucide-react-native';
+import { Brain, Dumbbell, Flame, Heart, Target, Users, Clock, BookOpen, Sun, Droplets, Smartphone, PenTool, BookMarked, Zap, Shield, Wine, Cross, Loader2 } from 'lucide-react-native';
 import { useHabits } from '../context/HabitsProvider';
 import { useUser } from '../context/userProvider';
 import { AVAILABLE_HABITS, PredefinedHabit, mapPredefinedToCreateData } from '../constants/habits';
+import { AnimatedButton } from '../components/AnimatedButton';
+import { useSound } from '../hooks/useSound';
 
 const backgroundImage = require('../assets/images/medieval-house-bg.jpg');
+const loadingIMage = require('../assets/images/loading2.jpg')
 
 // Componente para el efecto de glassmorphism
 const BlurredCard = ({ 
@@ -54,44 +57,6 @@ const BlurredCard = ({
   );
 };
 
-// Componente GoldButton con estilo medieval
-const GoldButton = ({ onPress, disabled, children, style }: { onPress: () => void, disabled?: boolean, children: React.ReactNode, style?: any }) => (
-  <TouchableOpacity
-    activeOpacity={1}
-    onPress={onPress}
-    disabled={disabled}
-    className={`py-4 rounded-xl overflow-hidden`}
-    style={{
-      paddingVertical: 16,
-      borderRadius: 12,
-      overflow: 'hidden',
-    }}
-  >
-    <View style={{
-      width: '100%',
-      paddingHorizontal: 6,
-      paddingVertical: 10,
-      borderRadius: 12,
-      borderWidth: 3,
-      borderTopColor: '#FFED4A',
-      borderLeftColor: '#FFED4A',
-      borderRightColor: '#B8860B',
-      borderBottomColor: '#B8860B',
-      shadowColor: '#DAA520',
-      backgroundColor: '#DAA520',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.8,
-      shadowRadius: 6,
-      elevation: 8,
-    }}>
-      <View className="flex-row items-center justify-center gap-3">
-        <T className="font-cinzel-bold text-base text-center text-black">
-          {children}
-        </T>
-      </View>
-    </View>
-  </TouchableOpacity>
-);
 
 // HabitCard Component
 const HabitCard = ({ 
@@ -290,15 +255,37 @@ const HabitCard = ({
 };
 
 export default function SelectHabits({ navigation }: any) {
-  const [selectedHabits, setSelectedHabits] = useState<string[]>([]);
+  const [selectedHabits, setSelectedHabits] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
   const [customizedHabits, setCustomizedHabits] = useState<{[key: string]: {days: boolean[], time: string}}>({});
   const { createHabit } = useHabits();
   const { isSuscribed } = useUser();
+  const { playSelectOptionSound} = useSound();
+  const spinAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     loadPersonalizedHabits();
   }, []);
+
+  useEffect(() => {
+    spinAnim.setValue(0);
+    const animation = Animated.loop(
+      Animated.timing(spinAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      })
+    );
+    animation.start();
+    return () => {
+      animation.stop();
+    };
+  }, [spinAnim]);
+
+  const rotate = spinAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
 
   // Habits that can be customized (not abstinence habits)
   const customizableHabits = ['run', 'gym_workout', 'cold_shower', 'meditate', 'read_books', 'journaling', 'sit_up', 'push_up', 'studying' ];
@@ -330,7 +317,7 @@ export default function SelectHabits({ navigation }: any) {
       const personalizedHabitsData = await AsyncStorage.getItem('personalizedHabits');
       if (personalizedHabitsData) {
         const personalizedHabits = JSON.parse(personalizedHabitsData);
-        setSelectedHabits(personalizedHabits.map((habit: any) => habit.id));
+        setSelectedHabits(new Set(personalizedHabits.map((habit: any) => habit.id)));
         return;
       }
       
@@ -339,7 +326,7 @@ export default function SelectHabits({ navigation }: any) {
       if (quizData) {
         const parsedData = JSON.parse(quizData);
         const personalizedHabits = parsedData.personalizedHabits || [];
-        setSelectedHabits(personalizedHabits.map((habit: any) => habit.id));
+        setSelectedHabits(new Set(personalizedHabits.map((habit: any) => habit.id)));
       }
     } catch (error) {
       console.error('Error loading personalized habits:', error);
@@ -347,15 +334,19 @@ export default function SelectHabits({ navigation }: any) {
   };
 
   const toggleHabit = (habitId: string) => {
-    setSelectedHabits(prev => 
-      prev.includes(habitId) 
-        ? prev.filter(id => id !== habitId)
-        : [...prev, habitId]
-    );
+    setSelectedHabits(prev => {
+      const next = new Set(prev);
+      if (next.has(habitId)) {
+        next.delete(habitId);
+      } else {
+        next.add(habitId);
+      }
+      return next;
+    });
   };
 
   const handleContinue = async () => {
-    if (selectedHabits.length === 0) {
+    if (selectedHabits.size === 0) {
       return;
     }
 
@@ -379,11 +370,11 @@ export default function SelectHabits({ navigation }: any) {
         }
       }
 
-      // Navigate to Pricing or Tabs based on user subscription
       if (isSuscribed) {
-        navigation.navigate('Tabs');
+        navigation.replace('Tabs');
       } else {
-        navigation.navigate('Pricing');
+        // navigation.replace('Pricing'); 
+        navigation.replace('Tabs');
       }
     } catch (error) {
       console.error('Error creating habits:', error);
@@ -393,67 +384,110 @@ export default function SelectHabits({ navigation }: any) {
   };
 
   return (
-    <View className="flex-1">
-      <ImageBackground
-        source={backgroundImage}
-        className="flex-1"
-        resizeMode="cover"
-      >
-        <View className="absolute inset-0 bg-black/50" />
-        
-        <SafeAreaView className="flex-1">
-          <ScrollView 
-            className="flex-1 px-4"
-            contentContainerStyle={{ paddingBottom: 100 }}
-            showsVerticalScrollIndicator={false}
-          >
-            {/* Header */}
-            <BlurredCard className="mt-8">
-              <View className="items-center">
-                <T className="text-2xl font-cinzel-bold text-white text-center mb-2">
-                  Plan Especial Personalizado
+    <View className="flex-1 relative">
+      {isLoading ? (
+        <>
+          <ImageBackground
+            source={loadingIMage}
+            className="absolute inset-0 h-full w-full"
+            resizeMode="cover"
+          />
+          <SafeAreaView className="flex-1 bg-black/30">
+            <View className="flex-1 items-center mt-60">
+              <View className="items-center space-y-4">
+                <Image
+                  source={require('../assets/images/piru-logo-transparente.webp')}
+                  style={{ width: 72, height: 72, opacity: 0.95 }}
+                  resizeMode="contain"
+                />
+                <T className="text-3xl font-cinzel-bold text-white text-center leading-tight">
+                  Preparando tus hábitos
                 </T>
-                <T className="text-white/80 text-center mb-2">
-                  Hemos seleccionado estos hábitos especialmente para ti basados en tu perfil.
-                </T>
-                <T className="text-yellow-400 text-center mb-4">
-                  Puedes modificar tu plan agregando o quitando hábitos
-                </T>
-                <T className="text-yellow-400 font-cinzel-bold text-lg">
-                  {selectedHabits.length} hábitos seleccionados
+                <T className="text-white/80 font-cinzel-bold text-center w-64">
+                  Aguarda un momento mientras creamos tu plan
                 </T>
               </View>
-            </BlurredCard>
-
-            {/* Habits List */}
-            <BlurredCard>
-              <View className="gap-4">
-                {AVAILABLE_HABITS.map((habit) => (
-                  <HabitCard
-                    key={habit.id}
-                    habit={habit}
-                    isSelected={selectedHabits.includes(habit.id)}
-                    onToggle={() => toggleHabit(habit.id)}
-                    isCustomizable={isCustomizable(habit.id)}
-                    customization={getHabitCustomization(habit.id)}
-                    onUpdateCustomization={(field, value) => updateHabitCustomization(habit.id, field, value)}
-                  />
-                ))}
-              </View>
-            </BlurredCard>
-
-            {/* Continue Button */}
-            <View className="mt-6">
-              <GoldButton
-                onPress={handleContinue}
-                disabled={selectedHabits.length === 0 || isLoading}
+              <Animated.View
+                className='mt-24'
+                style={{
+                  transform: [
+                    {
+                      rotate: rotate,
+                    },
+                  ],
+                }}
               >
-                {isLoading ? 'Creando hábitos...' : '¡Comenzar mi aventura!'}
-              </GoldButton>
+                <Loader2 size={40} color="white" />
+              </Animated.View>
             </View>
-          </ScrollView>
-        </SafeAreaView>
-      </ImageBackground>
+          </SafeAreaView>
+        </>
+      ) : (
+        <>
+          <ImageBackground
+            source={backgroundImage}
+            className="flex-1"
+            resizeMode="cover"
+          >
+            <View className="absolute inset-0 bg-black/50" />
+            <SafeAreaView className="flex-1">
+              <ScrollView 
+                className="flex-1 px-4"
+                contentContainerStyle={{ paddingBottom: 100 }}
+                showsVerticalScrollIndicator={false}
+              >
+                {/* Header */}
+                <BlurredCard className="mt-8">
+                  <View className="items-center">
+                    <T className="text-2xl font-cinzel-bold text-white text-center mb-2">
+                      Plan Especial Personalizado
+                    </T>
+                    <T className="text-white/80 text-center mb-2">
+                      Hemos seleccionado estos hábitos especialmente para ti basados en tu perfil.
+                    </T>
+                    <T className="text-yellow-400 text-center mb-4">
+                      Puedes modificar tu plan agregando o quitando hábitos
+                    </T>
+                    <T className="text-yellow-400 font-cinzel-bold text-lg">
+                      {selectedHabits.size} hábitos seleccionados
+                    </T>
+                  </View>
+                </BlurredCard>
+
+                {/* Habits List */}
+                <BlurredCard>
+                  <View className="gap-4">
+                    {AVAILABLE_HABITS.map((habit) => (
+                      <HabitCard
+                        key={habit.id}
+                        habit={habit}
+                        isSelected={selectedHabits.has(habit.id)}
+                        onToggle={() => {
+                          playSelectOptionSound();
+                          toggleHabit(habit.id);
+                        }}
+                        isCustomizable={isCustomizable(habit.id)}
+                        customization={getHabitCustomization(habit.id)}
+                        onUpdateCustomization={(field, value) => updateHabitCustomization(habit.id, field, value)}
+                      />
+                    ))}
+                  </View>
+                </BlurredCard>
+
+                {/* Continue Button */}
+                <View className="mt-6">
+                  <AnimatedButton
+                    onPress={handleContinue}
+                    disabled={selectedHabits.size === 0 || isLoading}
+                  >
+                    <T className='text-black font-cinzel-bold text-center'>¡Comenzar mi aventura!</T>
+                  </AnimatedButton>
+                </View>
+              </ScrollView>
+            </SafeAreaView>
+          </ImageBackground>
+        </>
+      )}
     </View>
   );
 }

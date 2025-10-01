@@ -157,9 +157,8 @@ export default function Loading({ navigation }: any) {
       timers.push(setTimeout(() => setIndex(i), stepMs * i));
     }
     
-    // Navigate after completion
     timers.push(setTimeout(() => {
-      navigation.navigate('Profile');
+      navigation.replace('Classes');
     }, totalMs + 1000));
 
     // Animate progress bar

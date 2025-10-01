@@ -5,11 +5,14 @@ import Svg, { Path, Line, Circle  } from 'react-native-svg';
 import { useUser } from "../../context/userProvider";
 
 // Asegúrate de tener estas imágenes en tu carpeta de assets
-const backgroundImage = require("../../assets/images/medieval-house-bg.jpg");
+const backgroundImage = require("../../assets/images/forge.jpg");
 const piruNivel1 = require("../../assets/images/piru-transparent.png");
 const piruNivel2  = require('../../assets/images/pirunivel2.png');
 const piruNivel3  = require('../../assets/images/pirunivel3.png');
 const piruNivel4  = require('../../assets/images/pirunivel4.png');
+const classMonje = require('../../assets/images/monjenivel1.jpg');
+const classMago = require('../../assets/images/magonivel1.jpg');
+const classGuerrero = require('../../assets/images/guerreronivel1.jpg');
 
 
 // Componente simulado de XPBar para React Native
@@ -168,7 +171,7 @@ const PentagonStats = ({ stats }: PentagonStatsProps) => {
 };
 
 export default function ProfileScreen({navigation}: any) {
-  const { user, currentStreak, getLeaderboard } = useUser();
+  const { user,  getLeaderboard } = useUser();
   const xp = user?.experience || 0;
   // const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [levelLeaderboard, setLevelLeaderboard] = useState<any[]>([]);
@@ -262,6 +265,23 @@ export default function ProfileScreen({navigation}: any) {
                   }
                 </Text>
                 <Text className="text-white/80 text-xl font-cinzel">días NoFap</Text>
+              </View>
+            </View>
+
+            {/* User Class Card */}
+            <View className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 mb-6">
+              <View className="items-center mb-3">
+                <Text className="text-white font-cinzel-bold text-xl">Tu Clase</Text>
+                <Text className="text-white/70 text-sm font-cinzel mt-1">{user?.class || 'Guerrero'}</Text>
+              </View>
+              <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+                <Image
+                  source={
+                    user?.class === 'Monje' ? classMonje : user?.class === 'Mago' ? classMago : classGuerrero
+                  }
+                  style={{ width: '100%', height: 180, borderRadius: 12 }}
+                  resizeMode="cover"
+                />
               </View>
             </View>
 

@@ -5,8 +5,9 @@ import { T } from '../components/T';
 import { useHabits } from '../context/HabitsProvider';
 import { useUser } from '../context/userProvider';
 import { AVAILABLE_HABITS } from '../constants/habits';
+import { AnimatedButton } from '../components/AnimatedButton';
 
-const backgroundImage = require('../assets/images/medieval-house-bg.jpg');
+const backgroundImage = require('../assets/images/forge.jpg');
 
 // Quiz data interface
 interface QuizData {
@@ -254,12 +255,10 @@ export default function ProfileScreen({navigation}: any) {
       // Save personalized habits to AsyncStorage for the SelectHabits screen
       await AsyncStorage.setItem('personalizedHabits', JSON.stringify(personalizedHabits));
       
-      // Navigate to SelectHabits screen
-      navigation.navigate('SelectHabits');
+      navigation.replace('SelectHabits');
     } catch (error) {
       console.error('Error in handleContinue:', error);
-      // Still navigate to SelectHabits even if there's an error
-      navigation.navigate('SelectHabits');
+      navigation.replace('SelectHabits');
     } finally {
       setIsLoading(false);
     }
@@ -318,9 +317,9 @@ export default function ProfileScreen({navigation}: any) {
           </GlassCard>
 
           <GlassCard style={styles.arenasCard}>
-            <T className="text-lg font-bold text-white text-center mb-2">Estos son los niveles que puedes ir escalando en la app</T>
+            <T className="text-lg font-cinzel-bold text-white text-center mb-2">Estos son los niveles que puedes ir escalando</T>
             <T className="text-sm text-white/80 text-center mb-4">
-              Comenzás en <Text style={{ color: '#fbbf24', fontWeight: '700' }}>Arena 1</Text> y vas desbloqueando nuevas arenas
+              Comenzás en <Text style={{ color: '#fbbf24', fontWeight: '700' }}>Arena 1</Text> y vas desbloqueando nuevas arenas a medida que subes de nivel completando hábitos
             </T>
             <View style={styles.arenasScroll}>
               {arenaLevels.slice().reverse().map((arena) => (
@@ -346,40 +345,14 @@ export default function ProfileScreen({navigation}: any) {
               ))}
             </View>
           </GlassCard>
-          <TouchableOpacity
-          disabled={isLoading}
-          onPress={handleContinue}
-          className="mt-6 w-full"
-          activeOpacity={0.9}
-          style={{
-            paddingVertical: 8,
-            borderRadius: 12,
-            overflow: 'hidden',
-          }}
+          <AnimatedButton
+            onPress={handleContinue}
+            disabled={isLoading}
           >
-            <View style={{
-              width: '100%',
-              paddingHorizontal: 6,
-              paddingVertical: 10,
-              borderRadius: 12,
-              borderWidth: 3,
-              borderTopColor: '#FFED4A',
-              borderLeftColor: '#FFED4A',
-              borderRightColor: '#B8860B',
-              borderBottomColor: '#B8860B',
-              shadowColor: '#DAA520',
-              backgroundColor: '#DAA520',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.8,
-              shadowRadius: 6,
-              elevation: 8,
-              marginBottom: 16,
-            }}>
               <View className="flex-row items-center justify-center gap-3">
                 <T className="font-cinzel-bold text-black text-center">{isLoading ? 'Cargando...' : '¡Personalizar mi Plan!'}</T>
               </View>
-            </View>
-          </TouchableOpacity>
+            </AnimatedButton>
         </ScrollView>
       </SafeAreaView>
     </View>

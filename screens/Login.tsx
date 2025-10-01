@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import { T } from '../components/T';
 import { useUser } from '../context/userProvider';
+import { AnimatedButton } from '../components/AnimatedButton';
 
 // Configure WebBrowser for OAuth
 WebBrowser.maybeCompleteAuthSession();
@@ -106,9 +107,9 @@ export default function LoginScreen({navigation}: any) {
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
       if (user?.completedQuiz) {
-        navigation.navigate('Profile');
+        // navigation.navigate('Profile');
       } else {
-        navigation.navigate('Quiz');
+        // navigation.navigate('Quiz');
       }
     }
   }, [isAuthenticated, isLoading]);
@@ -118,9 +119,9 @@ export default function LoginScreen({navigation}: any) {
       setIsSigningIn(true);
       await login();
       if (user?.completedQuiz) {
-        navigation.navigate('Profile');
+        // navigation.replace('Profile');
       } else {
-        navigation.navigate('Quiz');
+        // navigation.replace('Quiz');
       }
         
     } catch (error) {
@@ -136,7 +137,7 @@ export default function LoginScreen({navigation}: any) {
   };
 
   const handleBackPress = () => {
-    navigation.goBack();
+    navigation.replace('Initial');
   };
 
   return (
@@ -190,35 +191,10 @@ export default function LoginScreen({navigation}: any) {
             </T>
 
             {/* Google Button */}
-            <TouchableOpacity
+            <AnimatedButton
               onPress={handleGoogleSignIn}
               disabled={isSigningIn || isLoading}
-              className="w-full flex-row items-center justify-center"
-              activeOpacity={0.9}
-              style={{
-                paddingBottom: 16,
-                borderRadius: 12,
-                overflow: 'hidden',
-                opacity: (isSigningIn || isLoading) ? 0.7 : 1,
-              }}
             >
-              <View style={{
-                width: '100%',
-                paddingHorizontal: 6,
-                paddingVertical: 12,
-                borderRadius: 12,
-                borderWidth: 3,
-                borderTopColor: '#FFED4A',
-                borderLeftColor: '#FFED4A',
-                borderRightColor: '#B8860B',
-                borderBottomColor: '#B8860B',
-                shadowColor: '#DAA520',
-                backgroundColor: '#DAA520',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.8,
-                shadowRadius: 6,
-                elevation: 8,
-              }}>
                 {isSigningIn || isLoading ? (
                   <View className="flex-row items-center justify-center">
                     <ActivityIndicator size="small" color="#1a1a1a" />
@@ -231,8 +207,7 @@ export default function LoginScreen({navigation}: any) {
                     Continuar con Google
                   </T>
                 )}
-              </View>
-            </TouchableOpacity>
+              </AnimatedButton>
 
             {/* Benefits text */}
             <T className="text-xs text-white/75 text-center mb-5">

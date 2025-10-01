@@ -16,6 +16,7 @@ import { useHabits } from '../context/HabitsProvider';
 import { Dumbbell, Brain, Heart, Target, Users, Clock, Zap, Shield, Flame, Wine, Cross, BookOpen, PenTool, BookMarked, Smartphone, Droplets, Sun } from 'lucide-react-native';
 import { useNotifications } from '../hooks/useNotifications';
 import { AVAILABLE_HABITS, PredefinedHabit, mapPredefinedToCreateData } from '../constants/habits';
+import { AnimatedButton } from '../components/AnimatedButton';
 
 const backgroundImage = require('../assets/images/landscape-quiz.jpg');
 
@@ -56,44 +57,6 @@ const BlurredCard = ({ children, style, className }: { children: React.ReactNode
   );
 };
 
-// Componente GoldButton con estilo medieval del quiz
-const GoldButton = ({ onPress, disabled, children, style }: { onPress: () => void, disabled?: boolean, children: React.ReactNode, style?: any }) => (
-  <TouchableOpacity
-    activeOpacity={1}
-    onPress={onPress}
-    disabled={disabled}
-    className={`py-4 rounded-xl overflow-hidden`}
-    style={{
-      paddingVertical: 16,
-      borderRadius: 12,
-      overflow: 'hidden',
-    }}
-  >
-      <View style={{
-        width: '100%',
-        paddingHorizontal: 6,
-        paddingVertical: 10,
-        borderRadius: 12,
-        borderWidth: 3,
-        borderTopColor: '#FFED4A',
-        borderLeftColor: '#FFED4A',
-        borderRightColor: '#B8860B',
-        borderBottomColor: '#B8860B',
-        shadowColor: '#DAA520',
-        backgroundColor: '#DAA520',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.8,
-        shadowRadius: 6,
-        elevation: 8,
-      }}>
-      <View className="flex-row items-center justify-center gap-3">
-        <Text className="font-cinzel-bold text-base text-center text-black">
-          {children}
-        </Text>
-      </View>
-      </View>
-  </TouchableOpacity>
-);
 
 // Componente para los días de la semana, adaptado del OptionButton del quiz
 const DayButton = ({ onPress, active, label }: { onPress: () => void, active: boolean, label: string }) => (
@@ -452,7 +415,7 @@ export default function CreateHabitScreen({ navigation }: any) {
         <View className="absolute inset-0 bg-black/50" />
 
         <SafeAreaView className="flex-1">
-          <ScrollView contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 20, paddingTop: 40, paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 20, paddingTop: 40, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
 
             {/* Card para el encabezado */}
             <BlurredCard className="rounded-3xl mb-5 ">
@@ -495,7 +458,7 @@ export default function CreateHabitScreen({ navigation }: any) {
 
             {/* Botón de envío */}
             <View className="py-5 px-2.5">
-              <GoldButton
+              <AnimatedButton
                 onPress={handleCreateHabits}
                 disabled={selectedHabits.length === 0 || isSubmitting || getAvailableHabits().length === 0}
                 style={styles.submitButton}
@@ -507,7 +470,7 @@ export default function CreateHabitScreen({ navigation }: any) {
                      `Crear ${selectedHabits.length} Hábito${selectedHabits.length !== 1 ? 's' : ''}`}
                   </T>
                 </View>
-              </GoldButton>
+              </AnimatedButton>
             </View>
 
           </ScrollView>

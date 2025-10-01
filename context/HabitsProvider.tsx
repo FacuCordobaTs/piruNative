@@ -81,6 +81,7 @@ interface HabitsContextType {
   getHabitCompletions: (id: number, limit?: number, offset?: number) => Promise<HabitCompletion[]>;
   recordRelapse: (reason: string) => Promise<void>;
   getRelapses: () => Promise<any[]>;
+  getWeeklyCompletionSummary: (startDate?: Date) => Promise<Array<{ date: string; count: number; hasCompletion: boolean }>>;
 }
 
 const HabitsContext = createContext<HabitsContextType | undefined>(undefined);
@@ -387,6 +388,18 @@ export const HabitsProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   // Complete habit
   const completeHabit = async (id: number, data?: CompleteHabitData) => {
+    // Optimistic update: mark as completed immediately for instant UI feedback
+    const previouslyCompleted = habits.find(h => h.id === id)?.completedToday ?? false;
+    setHabits(prev => {
+      const index = prev.findIndex(h => h.id === id);
+      if (index === -1) return prev;
+      const next = prev.slice();
+      const existing = next[index];
+      if (existing.completedToday) return prev; // nothing to change
+      next[index] = { ...existing, completedToday: true };
+      return next;
+    });
+
     try {
       const response = await apiCall(`/habits/${id}/complete`, {
         method: 'POST',
@@ -407,15 +420,21 @@ export const HabitsProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         }
       };
       console.log(response.data);
-      // Update local habit state with new streak
-      setHabits(prev => prev.map(habit => 
-        habit.id === id ? { 
-          ...habit, 
+
+      // Minimal update: replace only the changed item by index
+      setHabits(prev => {
+        const index = prev.findIndex(h => h.id === id);
+        if (index === -1) return prev;
+        const next = prev.slice();
+        const existing = next[index];
+        next[index] = {
+          ...existing,
           currentStreak: response.data.newStreak,
           longestStreak: response.data.newLongestStreak,
-          completedToday: true
-        } : habit
-      ));
+          completedToday: true,
+        };
+        return next;
+      });
       
       // Check if user leveled up and trigger level up detection
       console.log('🎯 Level up check:', {
@@ -493,6 +512,17 @@ export const HabitsProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         stack: error instanceof Error ? error.stack : undefined,
         error: error
       });
+      // Revert optimistic completion if request failed and it wasn't completed before
+      if (!previouslyCompleted) {
+        setHabits(prev => {
+          const index = prev.findIndex(h => h.id === id);
+          if (index === -1) return prev;
+          const next = prev.slice();
+          const existing = next[index];
+          next[index] = { ...existing, completedToday: false };
+          return next;
+        });
+      }
       throw error;
     }
   };
@@ -570,6 +600,29 @@ export const HabitsProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   }
 
+  const getWeeklyCompletionSummary = async (startDate?: Date) => {
+    try {
+      const toKey = (d: Date) => {
+        const y = d.getFullYear();
+        const m = (d.getMonth() + 1).toString().padStart(2, '0');
+        const day = d.getDate().toString().padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      };
+
+      const startParam = startDate ? toKey(new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())) : undefined;
+      const endpoint = startParam ? `/habits/summary/weekly?start=${startParam}` : '/habits/summary/weekly';
+      const response = await apiCall(endpoint);
+      return response.data.days as Array<{ date: string; count: number; hasCompletion: boolean }>;
+    } catch (error) {
+      console.error('Error getting weekly completion summary:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        error: error
+      });
+      throw error;
+    }
+  }
+
   const value: HabitsContextType = {
     habits,
     isLoading,
@@ -582,6 +635,7 @@ export const HabitsProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     getHabitCompletions,
     recordRelapse,
     getRelapses,
+    getWeeklyCompletionSummary,
   };
 
   return (

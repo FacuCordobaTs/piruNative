@@ -4,12 +4,12 @@
     "slug": "piru",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/piru-logo-white.png",
+    "icon": "./assets/images/iconopiru.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
+      "image": "./assets/images/iconopiru.png",
+      "resizeMode": "cover",
       "backgroundColor": "#111827"
     },
     "ios": {
@@ -34,7 +34,7 @@
       ]
     },
     "web": {
-      "favicon": "./assets/images/piru-logo-white.png"
+      "favicon": "./assets/images/iconopiru.png"
     },
     "scheme": "piru",
     "plugins": [
@@ -43,7 +43,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/piru-logo-white.png",
+          "icon": "./assets/images/iconopiru.png",
           "color": "#ffffff"
         }
       ]

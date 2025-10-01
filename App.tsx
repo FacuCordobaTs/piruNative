@@ -9,6 +9,7 @@ import Tabs from './navigation/Tabs';
 import QuizScreen from './screens/Quiz';
 import Loading from './screens/Loading';
 import Profile from './screens/Profile';
+import Classes from './screens/Classes';
 import SelectHabits from './screens/SelectHabits';
 import { UserProvider, useUser } from './context/userProvider';
 import Pricing from './screens/Pricing';
@@ -36,6 +37,7 @@ function AppContent() {
             Login: 'Login',
             Quiz: 'Quiz',
             Tabs: 'Home',
+            Classes: 'Classes',
             Profile: 'Profile',
             SelectHabits: 'SelectHabits',
             Pricing: 'Pricing',
@@ -52,6 +54,7 @@ function AppContent() {
         <Stack.Screen name="Tabs" component={Tabs} />
         <Stack.Screen name="Quiz" component={QuizScreen} />
         <Stack.Screen name="Loading" component={Loading} />
+        <Stack.Screen name="Classes" component={Classes} />
         <Stack.Screen name="Profile" component={Profile} />
         <Stack.Screen name="SelectHabits" component={SelectHabits} />
         <Stack.Screen name="Pricing" component={Pricing} />

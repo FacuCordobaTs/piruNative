@@ -21,7 +21,9 @@ export interface User {
   socialPoints: number,
   lastRelapse: Date | null,
   completedQuiz: boolean,
-  referalCode: string | null
+  referalCode: string | null,
+  globalHabitsStreak: number,
+  class?: string,
 }
 
 export interface LevelUpData {
@@ -72,6 +74,7 @@ interface UserContextType {
   levelUpData: LevelUpData | null;
   clearLevelUpData: () => void;
   setLevelUpData: (data: LevelUpData | null) => void;
+  updateClass: (userClass: string) => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -220,6 +223,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.log('🔄 Refreshing user data...');
       await refreshUserData();
       console.log('✅ handleOAuthRedirect completed successfully');
+
+      console.log('User data:', user);
     } catch (error) {
       console.error('💥 Error in handleOAuthRedirect:', error);
       throw error;
@@ -248,6 +253,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         apiCall('/user/stats')
       ]);
 
+      setIsSuscribed(true);
       setUser(profileResponse.data.user);
       setSettings(profileResponse.data.settings);
       setStats(statsResponse.data);
@@ -259,7 +265,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setCurrentStreak(days);
       }
       const customerInfo = await Purchases.getCustomerInfo();
-      setIsSuscribed(user?.referalCode !== null || typeof customerInfo.entitlements.active["Suscripción Piru"] !== "undefined");
+      // setIsSuscribed(user?.referalCode !== null || typeof customerInfo.entitlements.active["Suscripción Piru"] !== "undefined");
 
     } catch (error) {
       console.error('Error refreshing user data:', error);
@@ -413,22 +419,37 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } : null);
   }
 
+  const updateClass = async (userClass: string) => {
+    try {
+      await apiCall('/user/class', {
+        method: 'POST',
+        body: JSON.stringify({ class: userClass })
+      });
+    } catch (error) {
+      console.error('Error updating class:', error);
+      throw error;
+    }
+  }
+
   const getLeaderboard = async () => {
     const response = await apiCall('/user/leaderboard');
     return response.data;
   }
 
   const handleReferal = async (referalCode: string) => {
-    if (referalCode == 'PIRUBI') {
-      const response = await apiCall('/user/referal', {
-        method: 'POST',
-        body: JSON.stringify({ referalCode })
-      });
-      setIsSuscribed(true);
-      return response.data;
-    } else {
-      return { success: false, message: 'Invalid referal code' };
-    }
+    console.log('handleReferal called with referalCode:', referalCode);
+    referalCode = referalCode.toUpperCase();
+    setIsSuscribed(true);
+    // if (referalCode == 'PIRUBI') {
+    //   const response = await apiCall('/user/referal', {
+    //     method: 'POST',
+    //     body: JSON.stringify({ referalCode })
+    //   });
+    //   setIsSuscribed(true);
+      return{ succes: true, message: 'Referal code applied'};
+    // } else {
+    //   return { success: false, message: 'Invalid referal code' };
+    // }
   }
 
   // Clear level up data
@@ -459,6 +480,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     levelUpData,
     clearLevelUpData,
     setLevelUpData,
+    updateClass,
   };
 
   return (

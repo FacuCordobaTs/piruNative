@@ -1,18 +1,17 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { View, SafeAreaView, TouchableOpacity, Image, Animated, StyleSheet, ScrollView, ImageBackground, useWindowDimensions, Alert, Modal } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Habit, useHabits } from '../../context/HabitsProvider';
 import { useUser } from '../../context/userProvider';
 import { AVAILABLE_HABITS } from '../../constants/habits';
 import { useNotifications } from '../../hooks/useNotifications'; 
 import { Brain, Dumbbell, Heart, Target, Users, Flame, Plus, Clock, Sword, Trophy, Zap, Edit3, Trash2, X, Loader2, ArrowRight, BookOpen } from 'lucide-react-native';
 import { T } from '../../components/T';
+import { AnimatedButton } from '../../components/AnimatedButton';
+import { IronAnimatedButton } from '../../components/IronAnimatedButton';
+import { useSound } from '../../hooks/useSound';
 
 // Import images
-const mascotImage = require('../../assets/images/piru-transparent.png');
-const piruNivel1 = require('../../assets/images/piru-transparent.png');
-const piruNivel2 = require('../../assets/images/pirunivel2.png');
-const piruNivel3 = require('../../assets/images/pirunivel3.png');
-const piruNivel4 = require('../../assets/images/pirunivel4.png');
 const backgroundImagenivel = require('../../assets/images/nivel1.jpg');
 const backgroundImagenivel2 = require('../../assets/images/nivel2.jpg');
 const backgroundImagenivel3 = require('../../assets/images/nivel3.jpg');
@@ -20,6 +19,9 @@ const backgroundImagenivel4 = require('../../assets/images/nivel4.jpg');
 const backgroundImagenivel5 = require('../../assets/images/nivel5.jpg');
 const backgroundImagenivel6 = require('../../assets/images/nivel6.jpg');
 const backgroundImagenivel7 = require('../../assets/images/nivel7.jpg');
+const piruTransparent = require('../../assets/images/piru-transparent.png');
+const piruNivel2 = require('../../assets/images/pirunivel2.png');
+const piruNivel3 = require('../../assets/images/pirunivel3.png');
 
 
 
@@ -47,250 +49,18 @@ const FlameIcon = () => <Flame color="#facc15" size={16} />;
 const ClockIcon = () => <Clock color="#facc15" size={16} />;
 const SwordIcon = () => <Sword color="#facc15" size={16} />;
 
-const CelebrationAnimation = ({ habit, experienceGained, onDone }: { habit: any; experienceGained: number; onDone: () => void }) => {
-  const scaleAnim = useRef(new Animated.Value(0.5)).current;
-  const opacityAnim = useRef(new Animated.Value(0)).current;
-  const textScaleAnim = useRef(new Animated.Value(0)).current;
-  const textOpacityAnim = useRef(new Animated.Value(0)).current;
-  
-  // Twinkle animations
-  const twinkleAnimations = useRef(
-    Array.from({ length: 8 }, () => ({
-      opacity: new Animated.Value(0),
-      scale: new Animated.Value(0),
-      rotate: new Animated.Value(0),
-    }))
-  ).current;
+const XPBar = ({ value, className = "" }: { value: number, className?: string }) =>
 
-  const physicalPoints = habit.physical ? Math.round(experienceGained / 10) : 0;
-  const mentalPoints = habit.mental ? Math.round(experienceGained / 10) : 0;
-  const spiritualPoints = habit.spiritual ? Math.round(experienceGained / 10) : 0;
-  const disciplinePoints = habit.discipline ? Math.round(experienceGained / 10) : 0;
-  const socialPoints = habit.social ? Math.round(experienceGained / 10) : 0;
-
-  const statIcon = habit.physical ? <Heart color="#EF4444" size={20} /> : null;
-  
-  useEffect(() => {
-    // Reset animation values
-    scaleAnim.setValue(0.5);
-    opacityAnim.setValue(0);
-    textScaleAnim.setValue(0);
-    textOpacityAnim.setValue(0);
-    
-    // Reset twinkle animations
-    twinkleAnimations.forEach(twinkle => {
-      twinkle.opacity.setValue(0);
-      twinkle.scale.setValue(0);
-      twinkle.rotate.setValue(0);
-    });
-
-    // Start twinkle animations with staggered delays
-    const twinkleAnimationsArray = twinkleAnimations.map((twinkle, index) => {
-      const delay = index * 200; // Stagger each twinkle by 200ms
-      return Animated.sequence([
-        Animated.delay(delay),
-        Animated.parallel([
-          Animated.timing(twinkle.opacity, {
-            toValue: 1,
-            duration: 300,
-            useNativeDriver: true,
-          }),
-          Animated.spring(twinkle.scale, {
-            toValue: 1,
-            friction: 3,
-            tension: 100,
-            useNativeDriver: true,
-          }),
-          Animated.timing(twinkle.rotate, {
-            toValue: 1,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-        ]),
-        Animated.delay(800),
-        Animated.parallel([
-          Animated.timing(twinkle.opacity, {
-            toValue: 0,
-            duration: 400,
-            useNativeDriver: true,
-          }),
-          Animated.timing(twinkle.scale, {
-            toValue: 0,
-            duration: 400,
-            useNativeDriver: true,
-          }),
-        ]),
-      ]);
-    });
-
-    Animated.sequence([
-      // First: animate the main container in
-      Animated.parallel([
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          friction: 4,
-          tension: 60,
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacityAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]),
-      // Wait a bit
-      Animated.delay(500),
-      // Then: animate the text in and start twinkles
-      Animated.parallel([
-        Animated.spring(textScaleAnim, {
-          toValue: 1,
-          friction: 4,
-          tension: 60,
-          useNativeDriver: true,
-        }),
-        Animated.timing(textOpacityAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        ...twinkleAnimationsArray,
-      ]),
-      // Wait longer
-      Animated.delay(2000),
-      // Finally: fade everything out
-      Animated.parallel([
-        Animated.timing(opacityAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(textOpacityAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]),
-    ]).start(() => {
-        onDone();
-    });
-  }, [habit, onDone, scaleAnim, opacityAnim, textScaleAnim, textOpacityAnim, twinkleAnimations]);
-  
-  // Generate random positions for twinkles
-  const twinklePositions = [
-    { top: '15%' as const, left: '20%' as const },
-    { top: '25%' as const, right: '15%' as const },
-    { top: '35%' as const, left: '10%' as const },
-    { top: '45%' as const, right: '25%' as const },
-    { top: '55%' as const, left: '30%' as const },
-    { top: '65%' as const, right: '10%' as const },
-    { top: '75%' as const, left: '15%' as const },
-    { top: '85%' as const, right: '20%' as const },
-  ];
-
-  return (
-    <View className="absolute inset-0 items-center justify-center" style={{ zIndex: 9999 }}>
-      {/* Twinkle elements */}
-      {twinkleAnimations.map((twinkle, index) => (
-        <Animated.View
-          key={index}
-          className="absolute"
-          style={[
-            twinklePositions[index],
-            {
-              opacity: twinkle.opacity,
-              transform: [
-                { scale: twinkle.scale },
-                {
-                  rotate: twinkle.rotate.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: ['0deg', '360deg'],
-                  }),
-                },
-              ],
-            },
-          ]}
-        >
-          <View className="w-3 h-3 bg-yellow-400 rounded-full shadow-lg">
-            <View className="absolute inset-0 bg-white rounded-full opacity-60" />
-          </View>
-        </Animated.View>
-      ))}
-
-      {/* Main container with scale and opacity animation */}
-      <Animated.View
-        className="absolute inset-0 items-center justify-center"
-        style={{
-          transform: [{ scale: scaleAnim }],
-          opacity: opacityAnim,
-        }}
-      >
-        {/* Background overlay */}
-        <View className="absolute inset-0 bg-black/50" />
-        
-        {/* Content container */}
-        <Animated.View
-          className="bg-black/90 rounded-2xl p-6 mx-4 max-w-sm w-full border-2 border-yellow-400/50"
-          style={{
-            transform: [{ scale: textScaleAnim }],
-            opacity: textOpacityAnim,
-          }}
-        >
-          <View className="items-center">
-            {/* Experience icon and text */}
-            <View className="flex-row items-center gap-2 mb-3">
-              <Zap color="#FCD34D" size={24} />
-              <T className="text-white text-xl font-cinzel-bold">
-                +{experienceGained} XP
-              </T>
-            </View>
-            
-            {/* Stat points if applicable */}
-            {physicalPoints > 0 && (
-              <View className="flex-row items-center gap-2 bg-yellow-500/20 px-3 py-2 rounded-lg my-1">
-                {statIcon}
-                <T className="text-white text-sm font-cinzel-bold">
-                  +{physicalPoints} Pts. en Físico
-                </T>
-              </View>
-            )}
-            {mentalPoints > 0 && (
-              <View className="flex-row items-center gap-2 bg-yellow-500/20 px-3 py-2 rounded-lg my-1">
-                {statIcon}
-                <T className="text-white text-sm font-cinzel-bold">
-                  +{mentalPoints} Pts. en Mental
-                </T>
-              </View>
-            )}
-            {spiritualPoints > 0 && (
-              <View className="flex-row items-center gap-2 bg-yellow-500/20 px-3 py-2 rounded-lg my-1">
-                {statIcon}
-                <T className="text-white text-sm font-cinzel-bold">
-                  +{spiritualPoints} Pts. en Espiritual
-                </T>
-              </View>
-            )}
-            {disciplinePoints > 0 && (
-              <View className="flex-row items-center gap-2 bg-yellow-500/20 px-3 py-2 rounded-lg my-1">
-                {statIcon}
-                <T className="text-white text-sm font-cinzel-bold">
-                  +{disciplinePoints} Pts. en Disciplina
-                </T>
-              </View>
-            )}
-            {socialPoints > 0 && (
-              <View className="flex-row items-center gap-2 bg-yellow-500/20 px-3 py-2 rounded-lg my-1">
-                {statIcon}
-                <T className="text-white text-sm font-cinzel-bold">
-                  +{socialPoints} Pts. en Social
-                </T>
-              </View>
-            )}
-          </View>
-        </Animated.View>
-      </Animated.View>
-    </View>
-  );
-};
+  { 
+    console.log('value', value)
+    return (
+  <View className={`w-full h-3 rounded-full bg-gray-700 overflow-hidden ${className}`}>
+    <View
+      className="h-full bg-yellow-500 rounded-full"
+      style={{ width: `${value}%` }}
+    />
+  </View>
+)};
 
 
 const LevelUpModal = ({ levelUpData, visible, onClose }: { levelUpData: any; visible: boolean; onClose: () => void }) => {
@@ -379,6 +149,79 @@ const LevelUpModal = ({ levelUpData, visible, onClose }: { levelUpData: any; vis
   );
 };
 
+// Welcome modal shown once using AsyncStorage
+const WelcomeModal = ({ visible, onFinish }: { visible: boolean; onFinish: () => void }) => {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    if (!visible) {
+      setStep(0);
+    }
+  }, [visible]);
+
+  const handleNext = () => {
+    if (step < 2) {
+      setStep(step + 1);
+    } else {
+      onFinish();
+    }
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onFinish}>
+      <View className="flex-1 bg-black/80 justify-center items-center">
+        <View className="w-[90%] max-w-sm rounded-2xl overflow-hidden border border-white/20 bg-black/70">
+          <View className="p-5 items-center">
+            {step === 0 && (
+              <>
+                <Image source={piruTransparent} style={{ width: 160, height: 160, marginBottom: 12 }} resizeMode="contain" />
+                <T className="text-2xl font-cinzel-bold text-white text-center mb-2">¡Bienvenido!</T>
+                <T className="text-white/90 text-center">
+                  Mi nombre es <T className="text-yellow-300 font-cinzel-bold">Piru</T> y, de ahora en adelante, seré tu
+                  mascota dentro de la app.
+                </T>
+              </>
+            )}
+
+            {step === 1 && (
+              <>
+                <T className="text-2xl font-cinzel-bold text-white text-center mb-3">Tu aventura diaria</T>
+                <T className="text-white/90 text-center mb-2">
+                  Aquí aparecerán tus hábitos para completar según el día, así como los que ya completaste.
+                </T>
+                <T className="text-white/90 text-center">
+                  La interfaz cambiará a medida que avances y subas de <T className="text-yellow-300">arenas</T>.
+                </T>
+              </>
+            )}
+
+            {step === 2 && (
+              <>
+                <T className="text-2xl font-cinzel-bold text-white text-center mb-3">¡Haz crecer a Piru!</T>
+                <T className="text-white/90 text-center mb-4">
+                  Si completas hábitos, mejorarás a <T className="text-yellow-300 font-cinzel-bold">Piru</T>.
+                </T>
+                <View className="flex-row items-center justify-center gap-4 mb-2">
+                  <Image source={piruNivel2} style={{ width: 90, height: 90 }} resizeMode="contain" />
+                  <Image source={piruNivel3} style={{ width: 90, height: 90 }} resizeMode="contain" />
+                </View>
+              </>
+            )}
+
+            <View className="mt-5 w-full">
+              <AnimatedButton onPress={handleNext}>
+                <View className="flex-row items-center justify-center gap-3">
+                  <T className="text-base font-cinzel-bold text-black">{step < 2 ? 'Continuar' : '¡Comenzar!'}</T>
+                </View>
+              </AnimatedButton>
+            </View>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
 // BlurredCard component for true glassmorphism effect
 const BlurredCard = ({ 
   children, 
@@ -426,10 +269,15 @@ const BlurredCard = ({
   );
 }; 
 
-// Weekly Calendar Component with enhanced styling
+// Weekly Calendar Component with flames on completed days
 const WeeklyCalendar = ({ userLevel }: { userLevel: number }) => {
   const days = ["LU", "MA", "MI", "JU", "VI", "SA", "DO"];
-  
+  const { getWeeklyCompletionSummary } = useHabits();
+  const { user } = useUser();
+  const [weekSummary, setWeekSummary] = useState<Array<{ date: string; count: number; hasCompletion: boolean }>>([]);
+  const globalStreak = user?.globalHabitsStreak || 0;
+  const streakColor = globalStreak > 0 ? '#ef4444' : '#9ca3af';
+
   // --- Lógica para obtener los días reales de la semana ---
   const now = new Date();
   const today = now.getDate();
@@ -448,11 +296,34 @@ const WeeklyCalendar = ({ userLevel }: { userLevel: number }) => {
   });
   // --- Fin de la lógica ---
 
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const data = await getWeeklyCompletionSummary(firstDayOfWeek);
+        setWeekSummary(data);
+      } catch (e) {
+        setWeekSummary([]);
+      }
+    };
+    load();
+  }, []);
+
+  const hasCompletionByIndex = (index: number) => {
+    if (!weekSummary || weekSummary.length !== 7) return false;
+    return weekSummary[index]?.hasCompletion === true;
+  };
+
   return (
       <BlurredCard className="mb-6" backgroundImage={getBackgroundByLevel(userLevel)}>
-          <View className="flex-row items-center mb-4">
-              <SwordIcon />
-              <T className="text-lg font-cinzel-bold text-white ml-2">Tu Semana</T>
+          <View className="flex-row items-center mb-4 justify-between">
+              <View className="flex-row items-center">
+                <SwordIcon />
+                <T className="text-lg font-cinzel-bold text-white ml-2">Tu Semana</T>
+              </View>
+              <View className="flex-row items-center">
+                <Flame color={streakColor} size={18} />
+                <T className="text-white ml-2 text-sm font-cinzel-bold">{globalStreak}</T>
+              </View>
           </View>
           <View className="flex-row justify-between items-center">
               {days.map((day, index) => (
@@ -463,13 +334,17 @@ const WeeklyCalendar = ({ userLevel }: { userLevel: number }) => {
                               dates[index] === today ? 'bg-white/40 scale-110' : ''
                           }`}
                       >
-                          <T
+                          {hasCompletionByIndex(index + 1) ? (
+                            <Flame color="#facc15" size={18} />
+                          ) : (
+                            <T
                               className={`text-sm font-cinzel-bold ${
                                   dates[index] === today ? 'text-white' : 'text-white/90'
                               }`}
-                          >
+                            >
                               {dates[index]}
-                          </T>
+                            </T>
+                          )}
                       </View>
                   </View>
               ))}
@@ -477,82 +352,6 @@ const WeeklyCalendar = ({ userLevel }: { userLevel: number }) => {
       </BlurredCard>
   );
 };
-
-// Mascot Section Component with enhanced styling
-// const MascotSection = ({ userLevel, user }: { userLevel: number, user: any }) => {
-//   // Calculate weighted score for pirunivel selection
-//   const getPiruNivelImage = () => {
-//     if (!user) return mascotImage; // Fallback to default mascot if user is null
-    
-//     // Calculate NoFap streak (similar to NoFap screen)
-//     let nofapStreak = 0;
-//     if (user.lastRelapse) {
-//       const lastRelapseDate = new Date(user.lastRelapse);
-//       const currentDate = new Date();
-//       const timeDiff = currentDate.getTime() - lastRelapseDate.getTime();
-//       nofapStreak = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-//     }
-    
-//     // Calculate average of all stat points
-//     const averageStats = (
-//       user.physicalPoints + 
-//       user.mentalPoints + 
-//       user.spiritualPoints + 
-//       user.disciplinePoints + 
-//       user.socialPoints
-//     ) / 5;
-    
-//     // Weighted calculation: 60% NoFap streak, 40% average stats
-//     const weightedScore = (nofapStreak * 0.6) + (averageStats * 0.4);
-    
-//     // Map weighted score to pirunivel images
-//     if (weightedScore >= 30) {
-//       return piruNivel4;
-//     } else if (weightedScore >= 20) {
-//       return piruNivel3;
-//     } else if (weightedScore >= 10) {
-//       return piruNivel2;
-//     } else {
-//       return piruNivel1;
-//     }
-//   };
-
-//   return (
-//     <BlurredCard backgroundImage={getBackgroundByLevel(userLevel)}>
-//       <View className="flex-row items-center gap-4">
-//         <View className="relative">
-//           <View className="w-32 h-32 overflow-hidden">
-//             <Image source={getPiruNivelImage()} className="w-full h-full" style={{ objectFit: 'contain' }} />
-//           </View>
-//         </View>
-//         <View>
-//           <T className="text-lg font-cinzel-bold text-white">Nivel {userLevel}</T>
-//           <View className="flex-row items-center">
-//             <Dumbbell color={'white'} width={15} />
-//             <T className='text-white font-cinzel  ml-2'>Físico: {user.physicalPoints}</T>
-//           </View>
-//           <View className="flex-row items-center">
-//             <Brain color={'white'} width={15} />
-//             <T className='text-white font-cinzel  ml-2'>Mental: {user.physicalPoints}</T>
-//           </View>
-//           <View className="flex-row items-center">
-//             <Heart color={'white'} width={15} />
-//             <T className='text-white font-cinzel  ml-2'>Espiritual: {user.physicalPoints}</T>
-//           </View>
-//           <View className="flex-row items-center">
-//             <Target color={'white'} width={15} />
-//             <T className='text-white font-cinzel  ml-2'>Disciplina: {user.physicalPoints}</T>
-//           </View>
-//           <View className="flex-row items-center">
-//             <Users color={'white'} width={15} />
-//             <T className='text-white font-cinzel  ml-2'>Social: {user.physicalPoints}</T>
-//           </View>
-//         </View>
-//       </View>
-//     </BlurredCard>
-//   );
-// };
-
 
 // Confetti Animation Component
 const Confetti = ({ onDone }: { onDone?: () => void }) => {
@@ -628,19 +427,6 @@ const Confetti = ({ onDone }: { onDone?: () => void }) => {
 };
 
 
-// Helper functions
-const getCategoryIcon = (category: string) => {
-  switch (category) {
-    case 'Físico': return <Dumbbell color={'white'} size={16} />;
-    case 'Mental': return <Brain color={'white'} size={16} />;
-    case 'Espiritual': return <Heart color={'white'} size={16} />;
-    case 'Disciplina': return <Target color={'white'} size={16} />;
-    case 'Social': return <Users color={'white'} size={16} />;
-    case 'Intelecto': return <BookOpen color={'white'} size={16} />;
-    default: return <Target color={'white'} size={16} />;
-  }
-};
-
 const getDifficultyStars = (difficulty: string) => {
   const starCount = difficulty === 'Fácil' ? 1 : difficulty === 'Medio' ? 2 : 3;
   return Array.from({ length: 3 }, (_, index) => (
@@ -658,7 +444,8 @@ const HabitItem = ({
   onEdit, 
   onDelete,
   isDeleting = false,
-  onStartCelebration
+  onStartCelebration,
+  onPlaySuccessSound
 }: { 
   habit: Habit, 
   onComplete: (id: number) => void,
@@ -666,11 +453,37 @@ const HabitItem = ({
   onEdit?: (habit: Habit) => void,
   onDelete?: (habit: Habit) => Promise<void>,
   isDeleting?: boolean,
-  onStartCelebration?: (habit: Habit) => void
+  onStartCelebration?: (habit: Habit) => void,
+  onPlaySuccessSound?: ()=> void,
 }) => {
+  const scaleValue = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    if (!isEditMode) {
+      Animated.spring(scaleValue, {
+        toValue: 0.95,
+        useNativeDriver: true,
+        tension: 300,
+        friction: 10,
+      }).start();
+    }
+  };
+
+  const handlePressOut = () => {
+    if (!isEditMode) {
+      Animated.spring(scaleValue, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 300,
+        friction: 10,
+      }).start();
+    }
+  };
 
   const handleComplete = async () => {
-    if (!habit.completedToday && !isEditMode) {       
+    if (!habit.completedToday && !isEditMode) {      
+      onPlaySuccessSound?.();
+      // playSuccessSound();
       // Start celebration in parent component
       onStartCelebration?.(habit);
       // Complete the habit immediately
@@ -700,10 +513,14 @@ const HabitItem = ({
   };
 
   if (!habit.completedToday) return (
+    
+    <Animated.View style={{ transform: [{ scale: scaleValue }] }}>
     <View className="relative">
       <TouchableOpacity
         onPress={handleComplete}
-        activeOpacity={0.9}
+        activeOpacity={1}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
         style={[
           styles.habitCard,
           styles.habitCardUncompleted,
@@ -798,6 +615,7 @@ const HabitItem = ({
 
 
     </View>
+    </Animated.View>
 
   )
 
@@ -810,8 +628,11 @@ const HabitItem = ({
           isEditMode && { borderColor: '#3b82f6', borderWidth: 2 }
         ]}
         onPress={handleComplete}
-        activeOpacity={0.8}
+        activeOpacity={1}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
       >
+        <Animated.View style={{ transform: [{ scale: scaleValue }] }}>
         {habit.image && (
           <Image 
             source={habit.image} 
@@ -868,18 +689,12 @@ const HabitItem = ({
         <View style={styles.completedCheckmark}>
           <T className="text-white text-lg font-bold">✓</T>
         </View>
+        </Animated.View>
       </TouchableOpacity>
 
       {/* Edit/Delete buttons when in edit mode */}
       {isEditMode && (
         <View className="absolute top-2 right-2 flex-row gap-2">
-          {/* <TouchableOpacity
-            onPress={handleEdit}
-            className="w-8 h-8 rounded-full bg-blue-500 items-center justify-center"
-            activeOpacity={0.8}
-          >
-            <Edit3 color="white" size={16} />
-          </TouchableOpacity> */}
           <TouchableOpacity
             onPress={handleDelete}
             className={`w-8 h-8 rounded-full items-center justify-center ${
@@ -907,7 +722,9 @@ export default function HomePage({navigation}: any) {
   const [showCelebration, setShowCelebration] = useState(false);
   const [celebrationHabit, setCelebrationHabit] = useState<Habit | null>(null);
   const [showLevelUpModal, setShowLevelUpModal] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
+  const { playSuccessSound, playLevelUpSound } = useSound();
   useEffect(() => {
     // navigation.navigate('SelectHabits');
     refreshHabits();
@@ -918,9 +735,25 @@ export default function HomePage({navigation}: any) {
     });
   }, []);
 
+  // Check if welcome has been shown
+  useEffect(() => {
+    const checkWelcome = async () => {
+      try {
+        const shown = await AsyncStorage.getItem('piru_welcome_shown_v1');
+        if (!shown) {
+          setShowWelcomeModal(true);
+        }
+      } catch (e) {
+        setShowWelcomeModal(true);
+      }
+    };
+    checkWelcome();
+  }, []);
+
   // Show modal when level up data is available
   useEffect(() => {
     if (levelUpData) {
+      playLevelUpSound();
       console.log('🎊 Level up data received in Home:', levelUpData);
       // Show level up modal after a short delay
       setTimeout(() => {
@@ -970,7 +803,7 @@ export default function HomePage({navigation}: any) {
     setTimeout(() => {
       setShowCelebration(false);
       setCelebrationHabit(null);
-    }, 3000);
+    }, 2500);
   };
 
   const handleLevelUpDone = () => {
@@ -1000,9 +833,22 @@ export default function HomePage({navigation}: any) {
             <View className="mb-6">
               {/* Weekly Calendar */}
               <WeeklyCalendar userLevel={user?.level || 1} />
-
-              {/* Mascot Section */}
-              {/* <MascotSection userLevel={user?.level || 1} user={user} /> */}
+              {/* Level Progress */}
+              <View className="px-4">
+                <View className="flex-row items-center gap-3">
+                  <Trophy className="w-6 h-6" color={'white'}/>
+                  <View className="flex-1">
+                    <View className="flex-row items-center justify-between mb-2">
+                      <T className="font-cinzel-bold text-white">Nivel {user?.level}</T>
+                      <T className="text-xs font-cinzel-bold text-white">
+                        {user?.experience}/{user?.experienceToNext} XP
+                      </T>
+                    </View>
+                    <XPBar value={((user?.experience || 0) / (user?.experienceToNext || 100)) * 100} />
+                  </View>
+                </View>
+              </View>
+              
             </View>
 
             {/* Scrollable Habits Section */}
@@ -1014,56 +860,34 @@ export default function HomePage({navigation}: any) {
             >
               
               {/* Arena Button */}
-              <TouchableOpacity
-                onPress={() => navigation.navigate('Arenas')}
-                className="mb-6"
-                activeOpacity={0.9}
-                style={{
-                  paddingVertical: 8,
-                  borderRadius: 12,
-                  overflow: 'hidden',
-                }}
-              >
-                <View style={{
-                  width: '100%',
-                  paddingHorizontal: 16,
-                  paddingVertical: 14,
-                  borderRadius: 12,
-                  borderWidth: 3,
-                  borderTopColor: '#4a4a4a',
-                  borderLeftColor: '#4a4a4a',
-                  borderRightColor: '#1a1a1a',
-                  borderBottomColor: '#1a1a1a', 
-                  backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                }}>
-                  <View className="flex-row items-center justify-between">
-                    <View className="flex-row items-center gap-3">
-                      <Sword color="#fbbf24" size={24} />
-                      <View>
-                        <T className="text-base font-cinzel-bold text-white">Tu Arena Actual</T>
-                        <T className="text-sm font-cinzel text-white">
-                          {(() => {
-                            const level = user?.level || 1;
-                            const arenaNames = [
-                              'Aldea Pacífica',
-                              'Bosque Encantado', 
-                              'Puente Ancestral',
-                              'Valle Místico',
-                              'Castillo Otoñal',
-                              'Torre del Dragón',
-                              'Ciudadela Celestial'
-                            ];
-                            return `Arena ${level}: ${arenaNames[level - 1] || 'Desconocida'}`;
-                          })()}
-                        </T>
-                      </View>
-                    </View>
-                    <View className="w-8 h-8 rounded-full bg-white/20 items-center justify-center">
-                      <ArrowRight color="white" size={16} />
+              <IronAnimatedButton onPress={() => navigation.navigate('Arenas')}>
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-row items-center gap-3">
+                    <Sword color="#fbbf24" size={24} />
+                    <View>
+                      <T className="text-base font-cinzel-bold text-white">Tu Arena Actual</T>
+                      <T className="text-sm font-cinzel text-white">
+                        {(() => {
+                          const level = user?.level || 1;
+                          const arenaNames = [
+                            'Aldea Pacífica',
+                            'Bosque Encantado', 
+                            'Puente Ancestral',
+                            'Valle Místico',
+                            'Castillo Otoñal',
+                            'Torre del Dragón',
+                            'Ciudadela Celestial'
+                          ];
+                          return `Arena ${level}: ${arenaNames[level - 1] || 'Desconocida'}`;
+                        })()}
+                      </T>
                     </View>
                   </View>
+                  <View className="w-8 h-8 rounded-full bg-white/20 items-center justify-center">
+                    <ArrowRight color="white" size={16} />
+                  </View>
                 </View>
-              </TouchableOpacity>
+              </IronAnimatedButton>
               {/* Uncompleted Habits */}
               {uncompletedHabits.length > 0 && (
                 <View className="mb-6">
@@ -1095,6 +919,7 @@ export default function HomePage({navigation}: any) {
                          onDelete={handleDeleteHabit}
                          isDeleting={deletingHabitId === habit.id}
                          onStartCelebration={() => handleStartCelebration(habit)}
+                         onPlaySuccessSound={() => playSuccessSound()}
                        />
                      ))}
                   </View>
@@ -1128,39 +953,12 @@ export default function HomePage({navigation}: any) {
               )}
 
               {/* New Habit Button */}
-              <TouchableOpacity
-                onPress={() => navigation.navigate('CreateHabit')}
-                className="mt-6 w-full"
-                activeOpacity={0.9}
-                style={{
-                  paddingVertical: 8,
-                  borderRadius: 12,
-                  overflow: 'hidden',
-                }}
-              >
-                <View style={{
-                  width: '100%',
-                  paddingHorizontal: 6,
-                  paddingVertical: 10,
-                  borderRadius: 12,
-                  borderWidth: 3,
-                  borderTopColor: '#FFED4A',
-                  borderLeftColor: '#FFED4A',
-                  borderRightColor: '#B8860B',
-                  borderBottomColor: '#B8860B',
-                  shadowColor: '#DAA520',
-                  backgroundColor: '#DAA520',
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.8,
-                  shadowRadius: 6,
-                  elevation: 8,
-                }}>
-                  <View className="flex-row items-center justify-center gap-3">
-                    <Plus color={'black'} size={20}/>
-                    <T className="text-base font-cinzel-bold text-black">Agregar Hábitos</T>
-                  </View>
+              <AnimatedButton onPress={() => navigation.navigate('CreateHabit')}>
+                <View className="flex-row items-center justify-center gap-3">
+                  <Plus color={'black'} size={20}/>
+                  <T className="text-base font-cinzel-bold text-black">Agregar Hábitos</T>
                 </View>
-              </TouchableOpacity>
+              </AnimatedButton>
             </ScrollView>
           </View>
         </SafeAreaView>
@@ -1259,6 +1057,17 @@ export default function HomePage({navigation}: any) {
           </View>
         </View>
       )}
+
+      {/* Welcome Modal */}
+      <WelcomeModal
+        visible={showWelcomeModal}
+        onFinish={async () => {
+          try {
+            await AsyncStorage.setItem('piru_welcome_shown_v1', '1');
+          } catch (e) {}
+          setShowWelcomeModal(false);
+        }}
+      />
 
       {/* Level Up Modal */}
       
